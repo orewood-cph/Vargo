@@ -1,0 +1,2 @@
+# Vargo
+Combat assistant
