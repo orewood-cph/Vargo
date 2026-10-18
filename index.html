@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111315">
-<title>Vargo Combat Assistant V20 — Classic</title>
+<title>Vargo Combat Assistant V20.1 — Classic</title>
 <style>
 
 :root{--bg:#111315;--panel:#1a1e21;--panel2:#23292e;--line:#394147;--text:#f4f1e8;--muted:#aeb6bb;--accent:#d76543;--good:#4b9b68;--warn:#d5a33c;--bad:#bd4b4b;--blue:#4f7fa7}
@@ -108,11 +108,15 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
   <div class="choice2"><button id="rageBtn" onclick="rageToggle()">START RAGE</button><button id="recklessBtn" onclick="recklessToggle()">RECKLESS OFF</button></div>
   <div id="phase" class="small"></div>
   <div class="row toolset"><label class="inline"><input id="bless" type="checkbox" onchange="setFlags('bless',this.checked)"> Bless +1d4</label><label class="inline"><input id="adv" type="checkbox" onchange="setFlags('extAdv',this.checked)"> Advantage</label><label class="inline"><input id="dis" type="checkbox" onchange="setFlags('extDis',this.checked)"> Disadvantage</label></div>
-  <details id="combatAdvanced"><summary>Flere handlinger, våbenskift og movement (valgfrit)</summary>
-    <div class="grid"><label>Vælg Action<select id="actionSelect"><option value="">Vælg (valgfrit)</option><option>Attack</option><option>Dash</option><option>Dodge</option><option>Disengage</option><option>Help</option><option>Hide</option><option>Ready</option><option>Search</option><option>Use an Object</option><option>Grapple</option><option>Shove</option></select></label><div><label>&nbsp;</label><button onclick="applyAction()">BRUG ACTION</button></div>
-      <label>Hænder / våben klar<select id="hand" onchange="changeHands(this.value)"><option value="greatsword">Greatsword (2 hænder)</option><option value="dual">Handaxe + dagger</option><option value="one">Et enhåndsvåben / fri hånd</option></select></label>
+  <details id="combatAdvanced"><summary>Andre handlinger og movement (valgfrit)</summary>
+    <div class="explain"><b>Attack er standard:</b> Dine to angreb er klar uden ekstra valg. Grapple og Shove findes under det enkelte angrebs flere muligheder.</div>
+    <div class="grid"><label>Anden action<select id="actionSelect"><option value="">Vælg kun hvis du ikke angriber</option><option>Dash</option><option>Dodge</option><option>Disengage</option><option>Help</option><option>Hide</option><option>Ready</option><option>Search</option><option>Use an Object</option></select></label><div><label>&nbsp;</label><button onclick="applyAction()">BRUG ANDEN ACTION</button></div>
       <label>Movement brugt (ft.)<input id="move" type="number" min="0" onchange="setMove(this.value)"></label>
     </div>
+    <details><summary>To våben i hænderne (kun ved Two-Weapon Fighting)</summary>
+      <div class="explain">Hvis du faktisk har handaxe og dagger i hver sin hånd, kan du markere dem klar. Det kræver, at de lovligt er trukket frem efter 2014-reglerne.</div>
+      <button onclick="changeHands('dual')">MARKÉR HANDAXE + DAGGER KLAR</button>
+    </details>
     <label class="inline"><input id="fearVisible" type="checkbox" onchange="setFlags('fearVisible',this.checked)"> Frightened-kilde synlig</label>
     <div class="explain">Reckless virker også uden Rage og kun ved STR-melee attacks. Bless kræver, at den faktiske caster opretholder concentration.</div>
   </details>
@@ -223,9 +227,9 @@ function renderCombat(){
   el('recklessBtn').disabled=s.phase!=='self'||s.attacks.some(a=>a.result&&W[a.k].mode==='melee'&&W[a.k].stat==='STR')||incap();
   el('phase').textContent=`Action: ${s.action||'Ledig'} • Bonus: ${s.bonus||'Ledig'} • Reaction: ${s.reaction||'Ledig'} • Movement ${s.moveUsed}/${movement()} ft.`+(incap()?' • UDE AF STAND TIL AT HANDLE (incapacitated / 0 HP)':'');
   el('bless').checked=s.bless;el('adv').checked=s.extAdv;el('dis').checked=s.extDis;el('fearVisible').checked=s.fearVisible;
-  el('hand').value=s.hands;el('move').value=s.moveUsed;
+  el('move').value=s.moveUsed;
   el('initiative').value=s.initiative===null?'':s.initiative-2;
-  el('actionSelect').value=s.action||'';
+  el('actionSelect').value=s.action && s.action!=='Attack' ? s.action : '';
   const expanded=[0,1,2].map(i=>el('attackAdvanced'+i)?.open||false);el('attackCards').innerHTML=s.attacks.map((a,i)=>card(a,i)).join('')+(s.bonusAttack?card(s.bonusAttack,2):'');expanded.forEach((opened,i)=>{const panel=el('attackAdvanced'+i);if(panel&&opened)panel.open=true;});
   const meleeCrit=s.attacks.some(a=>(a.result==='crit'||(a.kill&&a.result==='hit'))&&W[a.k].mode==='melee');
   const light=s.attacks.some(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');
@@ -249,7 +253,7 @@ function card(a,i){
  ${w.heavy&&w.mode==='melee'?`<div class="row toolset"><label class="inline"><input type="checkbox" ${a.gwm?'checked':''} ${locked?'disabled':''} onchange="changeAttack(${i},'gwm',this.checked)"> GWM −5/+10</label></div>`:''}
  <div class="rollbox"><div class="rolltitle">TO HIT • ${m.kind.toUpperCase()}</div><div class="roll">${hitType} ${b>=0?'+':''}${b}${s.bless?' +1d4 Bless':''}</div><div class="small">${safe([...m.adv.map(x=>'ADV: '+x),...m.dis.map(x=>'DIS: '+x)].join(' • ')||'Standard attack roll')}</div></div>
  <div class="rollbox"><div class="rolltitle">DAMAGE (NORMAL / CRIT)</div><div class="roll">${dice(a)}<div class="small">CRIT: ${dice(a,true)}</div></div><div class="compact-note">${magical(a)?'Magical via Chains (Rage + attunement)':'Ikke magical fra Chains'}${w.mode==='thrown'?' • Kast: ingen melee-bonus':''}</div></div>
- ${!weaponOkay(w)?'<div class="warnnote">Vælg korrekt våben i hænderne under Flere handlinger.</div>':''}${avail(a.k)===0?'<div class="warnnote">Våbnet er ikke længere i din beholdning.</div>':''}
+ ${!weaponOkay(w)?`<div class="warnnote">Våbnet er ikke klar i hænderne endnu. <button onclick="readyForAttack(${i})" ${locked?'disabled':''}>GØR DETTE VÅBEN KLAR</button></div>`:''}${avail(a.k)===0?'<div class="warnnote">Våbnet er ikke længere i din beholdning.</div>':''}
  ${m.notes.length?`<div class="warnnote">${safe(m.notes.join(' • '))}</div>`:''}
  ${locked?`<div class="row toolset"><button class="ghost" onclick="correctAttack(${i})">RET / FORTRYD ANGREB</button>${a.surprise?'<span class="tag">Surprise +2d6</span>':''}${ap?'<span class="tag">Ancestral Protectors</span>':''}</div>
  ${canChains?`<div class="row toolset"><button class="warn" ${!s.attuned||!s.rage||!s.chains?'disabled':''} onclick="activateChains(${i})">CHAINS ${s.chains}/1 — BRUG PÅ HIT</button></div>${!s.attuned?'<div class="compact-note">Attunement skal aktiveres under Karakterdata.</div>':''}`:''}`:
@@ -271,7 +275,33 @@ function render(){const previousDamageRows=[...document.querySelectorAll('#damag
   if(previousDamageRows.length){el('damageRows').innerHTML='';for(const x of previousDamageRows){damageRow();const r=el('damageRows').lastElementChild;r.querySelector('.damount').value=x.amount;r.querySelector('.dsource').value=x.source;r.querySelector('.dtype').value=x.type;r.querySelector('.dmagic').checked=x.magic;r.querySelector('.dmod').value=x.mod;}}else if(el('damageRows').children.length===0)damageRow();saveCalc();save();
 }
 function setNum(k,v,max){commit(()=>{s[k]=Math.max(0,Math.min(k==='hp'?hpCap():max,Math.trunc(nval(v))));msg(k+' rettet manuelt')});}
-function changeAttack(i,k,v){commit(()=>{const a=i===2?s.bonusAttack:s.attacks[i];a[k]=['dist','cover'].includes(k)?Math.max(0,nval(v)):v;if(k==='k'){a.gwm=false;}if(k==='id')a.dist=5;});}
+function neededHands(w){
+  if(w.mode==='unarmed')return s.hands;
+  if(w.two)return 'greatsword';
+  if(s.hands==='dual'&&w.mode==='melee'&&w.light)return 'dual';
+  return 'one';
+}
+function confirmHands(next){
+  if(next===s.hands)return true;
+  if(s.interaction&&s.action!=='Use an Object'){
+    alert('Du har allerede brugt din frie object interaction på denne tur. Et yderligere våbenskift kan kræve en Action eller en DM-afgørelse.');return false;
+  }
+  return confirm('Våbenskift: Bekræft at Vargo kan gøre dette våben klar lovligt (slippe/lægge væk/trække). I 2014 har du normalt kun én fri object interaction pr. tur. Fortsæt?');
+}
+function readyForAttack(i){
+  const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result)return;
+  const next=neededHands(W[a.k]);if(!confirmHands(next))return;
+  commit(()=>{if(next!==s.hands){s.hands=next;s.interaction=true;msg('Hænder/våben klar opdateret. Kontrollér det fysiske våbenskift ved bordet.');}});
+}
+function changeAttack(i,k,v){
+  const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result)return;
+  const next=k==='k'?neededHands(W[v]):s.hands;
+  if(k==='k'&&!confirmHands(next)){render();return;}
+  commit(()=>{if(k==='k'&&next!==s.hands){s.hands=next;s.interaction=true;msg('Våbenskift registreret — én fri object interaction brugt.');}
+    a[k]=['dist','cover'].includes(k)?Math.max(0,nval(v)):v;
+    if(k==='k')a.gwm=false;if(k==='id')a.dist=5;
+  });
+}
 function addExtra(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a)return;const formula=prompt('Ekstra damage formula, fx 1d6 eller 2d6+2','1d6');if(formula===null)return;const clean=formula.replace(/\s+/g,'');if(!/^(\d+d\d+(?:\+\d+)?|\d+)$/.test(clean))return alert('Brug fx 1d6, 2d6+2 eller 5');const type=prompt('Damage type (fx Fire eller Necrotic)','Fire');if(!type)return;const source=prompt('Kilde / ability (fx spell eller item)','Ekstern')||'Ekstern';commit(()=>{a.extra=a.extra||[];a.extra.push({formula:clean,type,source});msg('Ekstra damage føjet til '+W[a.k].n)});}
 function clearExtra(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a)return;commit(()=>{a.extra=[];});}
 function maneuver(i,kind){if(i>1||s.phase!=='self'||incap())return;if(s.action&&s.action!=='Attack')return;const a=s.attacks[i];if(a.result)return;if(i===1&&!s.attacks[0].result)return alert('Registrér attack 1 først.');commit(()=>{s.action='Attack';a.result=kind;a.kill=false;s.attacked=true;msg(kind+' bruger én af to angreb fra Attack action. Contested Athletics +6 mod target Athletics/Acrobatics. DM afgør udfaldet.');});}
@@ -305,7 +335,7 @@ function rageToggle(){if(s.phase!=='self'||incap())return;commit(()=>{if(s.rage)
 function recklessToggle(){if(s.phase!=='self'||s.attacks.some(a=>a.result&&W[a.k].mode==='melee'&&W[a.k].stat==='STR')||incap())return;commit(()=>{s.reckless=!s.reckless;s.recklessDefense=s.reckless;});}
 function initiativeSet(v){if(!s.combat)return;if(v===''){commit(()=>{s.initiative=null;msg('Initiativ nulstillet.');});return;}const die=Number(v);if(!Number.isInteger(die)||die<1||die>20)return alert('Indtast dit d20-resultat fra 1 til 20.');commit(()=>{s.initiative=die+2;msg(`Initiativ: ${die} (d20) + 2 DEX = ${s.initiative}.`);});}
 function movement(){if(meCond('Grappled')||meCond('Restrained')||meCond('Paralyzed')||meCond('Petrified')||meCond('Stunned')||meCond('Unconscious')||s.exhaustion>=5)return 0;return (s.exhaustion>=2?20:40)*(s.action==='Dash'?2:1);}
-function changeHands(v){if(s.hands===v)return;commit(()=>{if(s.interaction&&s.action!=='Use an Object'){msg('Fri object interaction allerede brugt. Yderligere våbenskift kræver normalt en action; vælg Use an Object hvis relevant.');return;}if(s.interaction){msg('Yderligere våbenskift med Use an Object-action.');}else{s.interaction=true;msg('Fri object interaction anvendt ved våbenskift.');}s.hands=v;});}
+function changeHands(v){if(s.hands===v)return;if(!confirmHands(v))return;commit(()=>{s.hands=v;s.interaction=true;msg('Våben i hænderne ændret til '+(v==='dual'?'handaxe + dagger':v)+'. Kontrollér lovlig drawing/stowing ved bordet.');});}
 function endOwnTurn(){if(s.phase!=='self')return;commit(()=>{if(s.rage&&incap()){s.rage=false;s.ap=null;msg('Rage sluttede: Vargo er unconscious/incapacitated; evt. andre effekter vurderes særskilt.');}if(s.rage){s.rageTurns++;if(!s.attacked&&!s.damaged){s.rage=false;s.ap=null;msg('Rage ophørte: ingen hostile attack eller skade siden sidste tur.');}else if(s.rageTurns>=10){s.rage=false;s.ap=null;msg('Rage ophørte efter 1 minut.');}else msg('Vargos tur afsluttet — Rage fortsætter.');}else msg('Vargos tur afsluttet.');s.attacked=false;s.damaged=false;s.phase='others';});}
 function startOwnTurn(){if(s.phase!=='others')return;commit(()=>{s.phase='self';s.round++;s.turnNumber++;s.action='';s.bonus='';s.reaction='';s.moveUsed=0;s.interaction=false;s.reckless=false;s.recklessDefense=false;s.ap=null;s.chainsDebuff=null;s.attacks=[aNew(),aNew()];s.bonusAttack=null;s.bonusAttackType='';msg('Ny tur: reaction genopfrisket, AP og Chains-effekt fra sidste tur udløbet.');});}
 function newCombat(){if(s.combat&&!confirm('En kamp er aktiv. Vil du starte en ny?'))return;
