@@ -1,900 +1,262 @@
-
 <!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111315">
-<title>Vargo Combat Assistant</title>
+<title>Vargo Combat Assistant V19 — Level 6</title>
 <style>
-:root {
-  --bg:#111315;
-  --panel:#1a1e21;
-  --panel2:#23292e;
-  --line:#394147;
-  --text:#f4f1e8;
-  --muted:#aeb6bb;
-  --accent:#d76543;
-  --good:#4b9b68;
-  --warn:#d5a33c;
-  --bad:#bd4b4b;
-  --blue:#4f7fa7;
-}
-* {box-sizing:border-box}
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
-.wrap {max-width:760px;margin:auto;padding:10px 10px 90px}
-.card {background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:13px;margin:10px 0}
-h1,h2 {margin:0}
-h1 {font-size:1.35rem}
-h2 {font-size:1.02rem}
-.small {font-size:.82rem;color:var(--muted)}
-.top {position:sticky;top:0;z-index:20;background:linear-gradient(var(--bg) 90%,transparent);padding-top:6px}
-.statusbar {background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:9px}
-.statusrow {display:grid;grid-template-columns:.9fr .8fr .8fr .65fr 1.4fr;gap:6px}
-.stat {background:var(--panel2);border-radius:9px;padding:6px;text-align:center}
-.stat b {display:block;font-size:.98rem}
-.hpmini {height:5px;background:#3a2424;border-radius:999px;overflow:hidden;margin-top:5px}
-.hpfill {height:100%;background:#4b9b68;transition:background .2s ease}
-.hpfill.hp-mid {background:#d58a2f}
-.hpfill.hp-low {background:#bd4b4b}
-.row {display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-button,select,input {font:inherit}
-button {
-  border:1px solid var(--line);
-  background:#293036;
-  color:var(--text);
-  border-radius:10px;
-  padding:9px 11px;
-  font-weight:750;
-}
-button.active {background:var(--accent);border-color:var(--accent)}
-button.good {background:var(--good);border-color:var(--good)}
-button.warn {background:var(--warn);border-color:var(--warn);color:#161616}
-button.bad {background:var(--bad);border-color:var(--bad)}
-button.ghost {background:transparent}
-button:disabled {opacity:.4}
-select,input[type=number] {
-  width:100%;
-  background:#121518;
-  color:var(--text);
-  border:1px solid var(--line);
-  border-radius:9px;
-  padding:9px;
-}
-label {display:block;color:var(--muted);font-size:.8rem;margin-bottom:4px}
-.stephead {display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}
-.stepnum {display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#2c353b;font-weight:800;margin-right:7px}
-.explain {background:#15191c;border-left:3px solid #57636b;border-radius:8px;padding:8px 9px;margin-top:8px;font-size:.86rem;color:#d9dde0}
-.choice2 {display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.rollbox {background:#111517;border:1px dashed #4d5a62;border-radius:11px;padding:10px;margin-top:8px}
-.rolltitle {font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.roll {font-size:1.16rem;font-weight:850;margin-top:2px}
-.attack {border-left:4px solid var(--blue)}
-.attack.bonus {border-left-color:var(--warn)}
-.segment {display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
-.segment button {padding:9px 4px}
-.effect {padding:8px 9px;border-radius:9px;background:#20272b;margin-top:8px;font-size:.88rem}
-.effect.good {border-left:4px solid var(--good)}
-.effect.warn {border-left:4px solid var(--warn)}
-.hidden {display:none!important}
-.mods {display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
-.mods button {padding:8px 6px}
-.bottom {
-  position:fixed;
-  left:0;right:0;bottom:0;
-  background:#0e1012ef;
-  border-top:1px solid var(--line);
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  z-index:30;
-}
-.bottomin {max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-details {background:#161a1d;border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
-summary {font-weight:800;cursor:pointer}
-.damage-row {display:grid;grid-template-columns:1fr 1.25fr auto;gap:7px;align-items:end;margin:7px 0}
-.summary-line {display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #30363a}
-@media(max-width:520px) {
-  .statusrow {grid-template-columns:.9fr .8fr .8fr .65fr 1.35fr}
-  .segment {grid-template-columns:repeat(2,1fr)}
-}
+:root{--bg:#111315;--panel:#1a1e21;--panel2:#23292e;--line:#394147;--text:#f4f1e8;--muted:#aeb6bb;--accent:#d76543;--good:#4b9b68;--warn:#d5a33c;--bad:#bd4b4b;--blue:#4f7fa7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}.wrap{max-width:760px;margin:auto;padding:10px 10px 90px}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:13px;margin:10px 0}h1,h2{margin:0}h1{font-size:1.35rem}h2{font-size:1.02rem}.small{font-size:.82rem;color:var(--muted)}.top{position:sticky;top:0;z-index:20;background:linear-gradient(var(--bg) 90%,transparent);padding-top:6px}.statusbar{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:9px}.statusrow{display:grid;grid-template-columns:.9fr .8fr .8fr .65fr 1.4fr;gap:6px}.stat{background:var(--panel2);border-radius:9px;padding:6px;text-align:center}.stat b{display:block;font-size:.98rem}.hpmini{height:5px;background:#3a2424;border-radius:999px;overflow:hidden;margin-top:5px}.hpfill{height:100%;background:#4b9b68;transition:background .2s ease}.hpfill.hp-mid{background:#d58a2f}.hpfill.hp-low{background:#bd4b4b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button,select,input{font:inherit}button{border:1px solid var(--line);background:#293036;color:var(--text);border-radius:10px;padding:9px 11px;font-weight:750}button.active{background:var(--accent);border-color:var(--accent)}button.good{background:var(--good);border-color:var(--good)}button.warn{background:var(--warn);border-color:var(--warn);color:#161616}button.bad{background:var(--bad);border-color:var(--bad)}button.ghost{background:transparent}button:disabled{opacity:.4}select,input[type=number]{width:100%;background:#121518;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px}label{display:block;color:var(--muted);font-size:.8rem;margin-bottom:4px}.stephead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.stepnum{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#2c353b;font-weight:800;margin-right:7px}.explain{background:#15191c;border-left:3px solid #57636b;border-radius:8px;padding:8px 9px;margin-top:8px;font-size:.86rem;color:#d9dde0}.choice2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rollbox{background:#111517;border:1px dashed #4d5a62;border-radius:11px;padding:10px;margin-top:8px}.rolltitle{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.roll{font-size:1.16rem;font-weight:850;margin-top:2px}.attack{border-left:4px solid var(--blue)}.attack.bonus{border-left-color:var(--warn)}.segment{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}.segment button{padding:9px 4px}.effect{padding:8px 9px;border-radius:9px;background:#20272b;margin-top:8px;font-size:.88rem}.effect.good{border-left:4px solid var(--good)}.effect.warn{border-left:4px solid var(--warn)}.hidden{display:none!important}.mods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}.mods button{padding:8px 6px}.bottom{position:fixed;left:0;right:0;bottom:0;background:#0e1012ef;border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:30}.bottomin{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}details{background:#161a1d;border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}summary{font-weight:800;cursor:pointer}.damage-row{display:grid;grid-template-columns:1fr 1.25fr auto;gap:7px;align-items:end;margin:7px 0}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #30363a}@media(max-width:520px){.statusrow{grid-template-columns:.9fr .8fr .8fr .65fr 1.35fr}.segment{grid-template-columns:repeat(2,1fr)}}
+
+/* V19 — videreudvikling af V18-layoutet, uden eksterne afhængigheder */
+:root{color-scheme:dark}
+.row.spread{justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:end;margin:9px 0}
+.grid label{margin:0}
+label.inline{display:inline-flex;gap:6px;align-items:center;margin:6px 9px 4px 0;font-size:.84rem}
+input[type=checkbox]{accent-color:#d76543;width:17px;height:17px}
+input[type=number],input[type=text],select{max-width:100%}
+input:not([type=checkbox]){background:#13181b;border:1px solid #3b444b;color:#fff;padding:9px;border-radius:9px;min-width:0}
+button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #e6ad4e}
+button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
+.mini{background:#1c252b;border-radius:9px;margin:8px 0;padding:10px}
+.attack{background:#233747!important;border-left:5px solid #6ba6d4}.attack2{background:#253c32!important;border-left-color:#69b88b}.attack3{background:#443521!important;border-left-color:#e6ad4e}
+.attack .rollbox{background:#121619e0}.roll{font-size:1.06rem;line-height:1.5}.tag{border-radius:6px;background:#2b6650;padding:5px;font-size:.8rem}
+.warnnote{border-left:3px solid #d5a33c;background:#382e20;margin:8px 0;padding:8px;font-size:.84rem}
+.damage-row{grid-template-columns:.75fr 1.1fr 1.15fr auto;margin:7px 0}.damage-row input,.damage-row select{min-width:0;padding:8px 4px}
+#defense hr,#extras hr,details hr{border:0;border-top:1px solid #364047;margin:12px 0}
+#defense .row>label,#restControls .row>label{max-width:180px}
+#defense .row input,#restControls .row input{width:120px;display:block}
+#attackCards{display:block}
+.small{line-height:1.55}small{color:#b8c4ca}h2{margin:4px 0 8px}
+h3{font-size:1.02rem;margin:0 0 10px}
+@media(max-width:390px){.grid{grid-template-columns:1fr 1fr}.damage-row{grid-template-columns:1fr 1fr}.damage-row .dmod{grid-column:1/3}}
 </style>
 </head>
 <body>
-
 <div class="wrap">
-
-  <div class="top">
-    <div class="statusbar">
-      <div class="row" style="justify-content:space-between;margin-bottom:7px">
-        <h1>VARGO</h1>
-        <span class="small" id="roundText">Out of combat</span>
-      </div>
-      <div class="statusrow">
-        <div class="stat">
-          <span class="small">Initiativ</span>
-          <b id="initiativeTop">—</b>
-        </div>
-        <div class="stat">
-          <span class="small">Rage</span>
-          <b id="rageTop">OFF</b>
-        </div>
-        <div class="stat">
-          <span class="small">Uses</span>
-          <b id="rageUsesTop">4 / 4</b>
-        </div>
-        <div class="stat">
-          <span class="small">AC</span>
-          <b>15</b>
-        </div>
-        <div class="stat">
-          <span class="small">HP</span>
-          <b id="hpText">62 / 62</b>
-          <div class="hpmini"><div id="hpFill" class="hpfill"></div></div>
-        </div>
-      </div>
-      <div class="small" style="margin-top:6px">
-        Unarmored Defense: 10 + DEX 2 + CON 3 = AC 15
-      </div>
-      <div class="row" style="margin-top:7px">
-        <button id="shortRestBtn" class="ghost" onclick="openShortRest()">SHORT REST</button>
-        <button id="longRestBtn" class="ghost" onclick="longRest()">LONG REST</button>
-        <span class="small" id="hitDiceTop">Hit Dice 6 / 6</span>
-      </div>
-    </div>
-  </div>
-
-  <section class="card" id="turnCard" style="display:none">
-    <div id="initiativeBlock">
-      <div class="stephead"><h2><span class="stepnum">1</span>INITIATIV</h2></div>
-      <div class="explain"><b>Roll:</b> 1d20 + 2 (DEX)</div>
-      <div class="row" style="margin-top:8px">
-        <input id="initiativeInput" type="number" min="1" max="20" placeholder="Dit d20-resultat (1-20)" style="max-width:220px">
-        <button class="good" onclick="setInitiative()">SET INITIATIV</button>
-      </div>
-      <div id="initiativeResult" class="effect hidden"></div>
-      <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
-    </div>
-
-    <div class="stephead"><h2><span class="stepnum">2</span>START TUR</h2></div>
-    <div class="choice2">
-      <button id="rageBtn" onclick="toggleRage()">Start Rage</button>
-      <button id="recklessBtn" onclick="toggleReckless()">Reckless OFF</button>
-    </div>
-    <div class="explain"><b>Rage:</b> Bonus Action. +2 damage på STR-melee og resistance mod bludgeoning, piercing og slashing.</div>
-    <div class="explain"><b>Reckless:</b> Advantage på STR-melee resten af turen. Til gengæld får attacks mod Vargo advantage indtil næste tur.</div>
-    <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
-
-    <label>Attack modifiers</label>
-    <div class="mods">
-      <button id="blessBtn" onclick="toggleMod('bless')">Bless OFF</button>
-      <button id="extAdvBtn" onclick="toggleMod('externalAdv')">Advantage OFF</button>
-      <button id="extDisBtn" onclick="toggleMod('externalDis')">Disadvantage OFF</button>
-    </div>
-    <div class="explain">Bless giver +1d4 på attack rolls. Advantage og Disadvantage ophæver hinanden.</div>
-  </section>
-
-  <div id="attacks" style="display:none"></div>
-
-  <section class="card" id="endTurnCard" style="display:none">
-    <div class="stephead"><h2><span class="stepnum">6</span>SLUT TUR</h2></div>
-    <div id="rageContinueText" class="effect">Rage er ikke aktiv.</div>
-    <div class="choice2" style="margin-top:8px">
-      <button id="attackedBtn" onclick="toggleAttacked()">Angreb hostile? NEJ</button>
-      <button id="damagedBtn" onclick="toggleDamaged()">Tog damage? NEJ</button>
-    </div>
-    <div class="explain">Hvis Rage er aktiv og begge stadig er <b>NEJ</b>, slutter Rage ved slutningen af turen.</div>
-  </section>
-
-  <section class="card">
-    <div class="stephead"><h2>LEVEL 6 ABILITIES</h2></div>
-    <div class="effect">
-      <b>Magical Weapons — Chains</b>
-      Alle Vargos våbenangreb tæller som magical.
-    </div>
-    <div class="effect">
-      <b>Spirit Shield</b>
-      Mens Vargo rager: når en anden creature, han kan se inden for 30 ft, tager skade, kan Vargo bruge sin <b>Reaction</b> til at reducere skaden med <b>2d6</b>.
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button id="spiritShieldBtn" onclick="useSpiritShield()">SPIRIT SHIELD — RAGE REQUIRED</button>
-      <button class="ghost" onclick="resetReaction()">RESET REACTION</button>
-    </div>
-    <div class="effect" id="chainsStatus"><b>Chains:</b> 1 / 1 per Short Rest</div>
-  </section>
-
-  <details open>
-    <summary>HP & damage</summary>
-    <div style="margin-top:10px">
-      <div class="small">HP, damage og healing kan bruges både i og udenfor combat.</div>
-      <div class="effect"><b>Current HP:</b> <span id="hpDetail">62 / 62</span></div>
-      <h2 style="margin-top:14px">TAKE DAMAGE</h2>
-      <div class="small">Indtast hver damage type separat. Rage halverer automatisk bludgeoning, piercing og slashing.</div>
-      <div id="damageComponents"></div>
-      <div class="row">
-        <button onclick="addDamageComponent()">+ Add component</button>
-        <button class="bad" onclick="applyIncomingDamage()">Apply damage</button>
-        <button id="undoBtn" class="ghost" onclick="undoDamage()" disabled>Undo</button>
-      </div>
-      <div id="damageSummary"></div>
-      <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
-      <h2>HEAL</h2>
-      <div class="row">
-        <input id="healInput" type="number" min="1" max="62" placeholder="Healing amount" style="max-width:180px">
-        <button class="good" onclick="applyHealing()">Apply healing</button>
-      </div>
-      <details style="margin-top:12px">
-        <summary>Manual HP override</summary>
-        <div style="margin-top:8px" class="row">
-          <input id="hpInput" type="number" min="0" max="62" style="max-width:180px">
-          <button onclick="setHP(document.getElementById('hpInput').value)">Set HP</button>
-        </div>
-      </details>
-    </div>
-  </details>
-
-  <details id="shortRestPanel">
-    <summary>Short Rest & Hit Dice</summary>
-    <div style="margin-top:10px">
-      <div class="effect"><b>Available Hit Dice:</b> <span id="hitDiceDetail">6 / 6 d12</span></div>
-      <div class="explain">På en Short Rest kan Vargo bruge Hit Dice ét ad gangen. Rul selv <b>1d12</b>, tast resultatet ind, og appen lægger automatisk <b>+3 CON</b> til healing.</div>
-      <div class="row" style="margin-top:10px">
-        <button class="good" onclick="takeShortRest()">TAKE SHORT REST</button>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <input id="hitDieInput" type="number" min="1" max="12" placeholder="Dit d12-resultat (1-12)" style="max-width:220px">
-        <button class="good" onclick="useHitDie()">USE HIT DIE</button>
-      </div>
-      <div id="hitDieResult" class="effect hidden"></div>
-    </div>
-  </details>
-
-  <details>
-    <summary>Defensive reference</summary>
-    <div class="explain"><b>Danger Sense:</b> Advantage på DEX saves mod effekter Vargo kan se. Ikke hvis Blinded, Deafened eller Incapacitated.</div>
-    <div class="explain"><b>Fey Ancestry:</b> Advantage på saves mod Charmed.</div>
-    <div class="explain"><b>Darkvision:</b> 60 ft.</div>
-  </details>
-
+<header class="top"><div class="statusbar">
+ <div class="row spread"><h1>⚔ VARGO <span class="small">Bugbear · Ancestral Guardian 6 · D&D 2014</span></h1><span id="roundTop" class="small">Uden for combat</span></div>
+ <div class="statusrow"><div class="stat"><small>Initiativ</small><b id="initTop">—</b></div><div class="stat"><small>Rage</small><b id="rageTop">OFF</b></div><div class="stat"><small>Uses</small><b id="rageUsesTop">4/4</b></div><div class="stat"><small>AC</small><b>15</b></div><div class="stat"><small>HP</small><b id="hpTop">72/74</b><div class="hpmini"><div id="hpBar" class="hpfill"></div></div></div></div>
+ <div class="row"><span class="small" id="hdTop">Hit Dice 6/6</span><span class="small" id="chainsTop">Chains 1/1</span><span class="small">Speed 40 ft.</span></div>
+ </div></header>
+ <div class="card"><div class="row spread"><b>Seneste hændelse</b><button class="ghost" id="undo" onclick="undo()">↶ FORTRYD</button></div><div class="small" id="log">Klar.</div></div>
+ <div class="card" id="combatPanel" style="display:none">
+   <h2>KAMP · 2014 actions</h2>
+   <div class="grid"><label>Initiativ (total)<input id="initiative" type="number" placeholder="1d20+2" onchange="initiativeSet(this.value)"></label><label>Hænder / våben klar<select id="hand" onchange="changeHands(this.value)"><option value="greatsword">Greatsword (2 hænder)</option><option value="dual">Handaxe + dagger</option><option value="one">Et enhåndsvåben / fri hånd</option></select></label></div>
+   <div class="row"><button id="rageBtn" onclick="rageToggle()">START RAGE</button><button id="recklessBtn" onclick="recklessToggle()">RECKLESS OFF</button></div>
+   <p id="phase" class="small"></p>
+   <div class="grid"><label>Vælg Action<select id="actionSelect"><option value="">Vælg (valgfrit)</option><option>Attack</option><option>Dash</option><option>Dodge</option><option>Disengage</option><option>Help</option><option>Hide</option><option>Ready</option><option>Search</option><option>Use an Object</option><option>Grapple</option><option>Shove</option></select></label><div><label>&nbsp;</label><button onclick="applyAction()">BRUG ACTION</button></div><label>Movement brugt (ft.)<input id="move" type="number" min="0" onchange="setMove(this.value)"></label></div>
+   <div class="row"><label class="inline"><input id="bless" type="checkbox" onchange="setFlags('bless',this.checked)"> Bless +1d4</label><label class="inline"><input id="adv" type="checkbox" onchange="setFlags('extAdv',this.checked)"> Adv.</label><label class="inline"><input id="dis" type="checkbox" onchange="setFlags('extDis',this.checked)"> Dis.</label><label class="inline"><input id="fearVisible" type="checkbox" onchange="setFlags('fearVisible',this.checked)"> Frygtkilde synlig (ved Frightened)</label></div>
+   <p class="small">Reckless virker uafhængigt af Rage, kun når du vælger det ved første STR-melee attack på din egen tur. Bless forudsætter en caster, der opretholder concentration. Grapple/shove er ikke weapon hits.</p>
+ </div>
+ <div id="attackCards"></div>
+ <section class="card" id="extras"><h2>BONUS ATTACKS & REACTION</h2><div id="bonusButtons" class="row"></div><p id="bonusUsed" class="small"></p><hr><div id="reactionButtons" class="row"></div></section>
+ <section class="card"><h2>ANCESTRAL GUARDIAN & CHAINS</h2><div class="effect good" id="apStatus">Ingen AP aktiv.</div><div class="effect" id="chainStatus">Chains</div><p class="small">DM-genstand: attunement by a Barbarian. Under Rage er <b>melee weapon attacks</b> magical mod resistance/immunity. 1/short rest: ved hit på AP-mål reduceres speed med 10 ft. og målet kan ikke tage reactions indtil starten af din næste tur. Samme første AP-hit kan udløse Chains.</p></section>
+ <details open><summary>MÅL OG CONDITIONS</summary>
+   <div id="targets"></div><hr>
+   <div class="grid"><label>Hvem<select id="who"></select></label><label>Condition<select id="cond"></select></label><label>Kilde / hvem / varighed<input id="condSource" placeholder="fx Ghoul / 1 minut"></label><div><label>&nbsp;</label><button onclick="addCondition()">TILFØJ CONDITION</button></div></div>
+   <div id="conditionsOut"></div><div class="row"><label>Exhaustion (0–6)<input type="number" min="0" max="6" value="0" onchange="setExhaustion(this.value)"></label></div><div id="conditionHelp"></div>
+ </details>
+ <details open><summary>HP & DAMAGE</summary><div class="effect" id="hpDetail">72/74</div><div id="defense"></div></details>
+ <details><summary>INVENTORY / POTION</summary><div id="inventory"></div></details>
+ <details id="restPanel"><summary>SHORT / LONG REST</summary><div id="restControls"></div></details>
+ <details><summary>KARAKTERDATA & MANUEL KORREKTION</summary><div id="settingsPanel"></div><div class="small">STR 16 (+3) · DEX 14 (+2) · CON 16 (+3) · INT 8 (−1) · WIS 12 (+1) · CHA 8 (−1) · PB +3. Saves STR +6, DEX +2, CON +6, INT −1, WIS +1, CHA −1. Athletics +6, Perception +4, Stealth +5, Intimidation +2. Passive Perception 14. Volo-Bugbear Surprise Attack (1/combat), ikke MotM.</div></details>
 </div>
-
-<div class="bottom">
-  <div class="bottomin">
-    <button id="newCombatBtn" class="ghost" onclick="newCombat()">NEW COMBAT</button>
-    <button id="newTurnBtn" class="good" onclick="newTurn()">NEW TURN →</button>
-    <button id="endCombatBtn" class="bad" onclick="endCombat()">END COMBAT</button>
-  </div>
-</div>
+<footer class="bottom"><div class="bottomin" id="combatButtons"><button class="good" onclick="newCombat()">NEW COMBAT</button></div></footer>
 
 <script>
-const MAX_HP=62;
-const MAX_RAGES=4;
-const MAX_HIT_DICE=6;
+'use strict';
+const HP=74, MAX_RAGE=4, MAX_DICE=6, SAVE='vargoV19';
 const BPS=['Bludgeoning','Piercing','Slashing'];
-
-const damageTypes=[
-  'Bludgeoning','Piercing','Slashing',
-  'Acid','Cold','Fire','Force','Lightning',
-  'Necrotic','Poison','Psychic','Radiant','Thunder','Other'
-];
-
-const weapons={
-  gs:{name:'Greatsword (1) — Magical',melee:true,strMelee:true,gwm:true,die:'2d6',flat:3,type:'slashing',reach:'10 ft.'},
-  ham:{name:'Handaxe (1) — melee — Magical',melee:true,strMelee:true,die:'1d6',flat:3,type:'slashing',reach:'10 ft.'},
-  hat:{name:'Handaxe (1) — thrown — Magical',melee:false,strMelee:false,die:'1d6',flat:3,type:'slashing',range:'20/60 ft.'},
-  jam:{name:'Javelin (4) — melee — Magical',melee:true,strMelee:true,die:'1d6',flat:3,type:'piercing',reach:'10 ft.'},
-  jat:{name:'Javelin (4) — thrown — Magical',melee:false,strMelee:false,die:'1d6',flat:3,type:'piercing',range:'30/120 ft.'},
-  dam:{name:'Dagger (1) — melee (STR) — Magical',melee:true,strMelee:true,die:'1d4',flat:3,type:'piercing',reach:'10 ft.'},
-  dat:{name:'Dagger (1) — thrown (STR) — Magical',melee:false,strMelee:false,die:'1d4',flat:3,type:'piercing',range:'20/60 ft.'}
-};
-
-function fa(){
-  return {weapon:'gs',gwm:false,result:'none',kill:false,targetActed:null};
-}
-
-function fresh(){
-  return {
-    hp:62,rages:4,hitDice:6,
-    chainsReady:true,spiritShieldUsed:false,
-    inCombat:false,initiative:null,
-    rage:false,rageStarted:false,round:1,reckless:false,
-    bless:false,externalAdv:false,externalDis:false,
-    bonusUsed:false,attacked:false,damaged:false,
-    attacks:[fa(),fa(),fa()],
-    lastDamage:null
-  };
-}
-
+const TYPES=[...BPS,'Acid','Cold','Fire','Force','Lightning','Necrotic','Poison','Psychic','Radiant','Thunder'];
+const CONDS=['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
+const W={gs:{n:'Greatsword',mode:'melee',stat:'STR',dice:'2d6',type:'Slashing',heavy:1,two:1},hm:{n:'Handaxe',mode:'melee',stat:'STR',dice:'1d6',type:'Slashing',light:1},ht:{n:'Handaxe kast',mode:'thrown',stat:'STR',dice:'1d6',type:'Slashing',range:[20,60]},jm:{n:'Javelin',mode:'melee',stat:'STR',dice:'1d6',type:'Piercing'},jt:{n:'Javelin kast',mode:'thrown',stat:'STR',dice:'1d6',type:'Piercing',range:[30,120]},ds:{n:'Dagger STR',mode:'melee',stat:'STR',dice:'1d4',type:'Piercing',light:1},dd:{n:'Dagger DEX',mode:'melee',stat:'DEX',dice:'1d4',type:'Piercing',light:1},dts:{n:'Dagger kast STR',mode:'thrown',stat:'STR',dice:'1d4',type:'Piercing',range:[20,60]},dtd:{n:'Dagger kast DEX',mode:'thrown',stat:'DEX',dice:'1d4',type:'Piercing',range:[20,60]},ua:{n:'Unarmed Strike',mode:'unarmed',stat:'STR',dice:null,type:'Bludgeoning'}};
+const el=id=>document.getElementById(id);
+const hpCap=()=>s.exhaustion>=4?Math.floor(HP/2):HP;
+const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nval=(x,d=0)=>Number.isFinite(Number(x))?Number(x):d;
+const aNew=(k='gs')=>({k,id:'t1',dist:5,cover:0,visible:true,enemyNear:false,gwm:false,result:'',kill:false,surprise:false});
+const fresh=()=>({version:19,hp:72,temp:0,rages:4,hitDice:6,chains:1,attuned:false,potions:1,gear:{gs:1,hm:1,jm:4,ds:1},gold:15,
+  combat:false,round:1,phase:'idle',initiative:null,turnNumber:0,rage:false,rageTurns:0,reckless:false,recklessDefense:false,
+  action:'',bonus:'',reaction:'',attacks:[aNew(),aNew()],bonusAttack:null,hands:'greatsword',interaction:false,moveUsed:0,
+  attacked:false,damaged:false,surpriseUsed:false,ap:null,chainsDebuff:null,bless:false,blessCaster:'',extAdv:false,extDis:false,fearVisible:false,resting:false,
+  targets:[{id:'t1',name:'Mål 1',ac:'',surprised:false,canSeeVargo:true,dodging:false,conditions:[]}],conditions:[],exhaustion:0,
+  deaths:{success:0,fail:0,stable:false,dead:false},lastInfo:'Klar til kamp.',migrated:false});
 let s;
-try {
-  s=JSON.parse(localStorage.getItem('vargoV8'))||fresh();
-} catch(e) {
-  s=fresh();
+try{s=JSON.parse(localStorage.getItem(SAVE));}catch(e){}
+if(!s||s.version!==19){let old;try{old=JSON.parse(localStorage.getItem('vargoV8'));}catch(e){}s=fresh();if(old){for(const k of ['hp','rages','hitDice'])if(Number.isFinite(old[k]))s[k]=Math.max(0,Math.min(k==='hp'?HP:k==='rages'?MAX_RAGE:MAX_DICE,old[k]));if(old.chainsReady===false)s.chains=0;s.migrated=true;s.lastInfo='Ældre ressourcer indlæst. Bekræft aktuelle HP, Rages, Hit Dice og attunement.';}}
+let history=[];
+function save(){try{localStorage.setItem(SAVE,JSON.stringify(s));}catch(e){}}
+function commit(fn){history.push(JSON.stringify(s));if(history.length>35)history.shift();const result=fn();render();return result;}
+function undo(){if(!history.length)return;s=JSON.parse(history.pop());render();}
+function msg(x){s.lastInfo=x;}
+function meCond(c){return s.conditions.some(x=>x.name===c);}
+function hasC(t,c){return t&&t.conditions.some(x=>x.name===c);}
+function incap(t){return (!t && (s.hp===0 || s.deaths.dead)) || ['Incapacitated','Paralyzed','Petrified','Stunned','Unconscious'].some(c=>t?hasC(t,c):meCond(c));}
+function target(id){return s.targets.find(t=>t.id===id)||s.targets[0];}
+function avail(w){return s.gear[w==='gs'?'gs':w.startsWith('h')?'hm':w.startsWith('j')?'jm':w.startsWith('d')?'ds':'ua']??99;}
+function weaponOkay(w){if(w.mode==='unarmed')return true;if(w.two&&s.hands!=='greatsword')return false;if(w.mode==='melee'&&!w.two&&s.hands==='greatsword')return false;if(w.mode==='thrown'&&s.hands==='greatsword')return false;return true;}
+function distOk(a){const w=W[a.k];return w.range?a.dist<=w.range[1]:a.dist<=((s.phase==='self')?10:5);}
+function magical(a){return s.attuned&&s.rage&&W[a.k].mode==='melee'&&a.k!=='ua';}
+function mods(a){const w=W[a.k],t=target(a.id),adv=[],dis=[],notes=[];
+  if(s.reckless&&s.phase==='self'&&w.mode==='melee'&&w.stat==='STR')adv.push('Reckless');
+  if(s.extAdv)adv.push('Ekstern advantage');if(s.extDis)dis.push('Ekstern disadvantage');
+  if(meCond('Blinded'))dis.push('Blinded');if(meCond('Poisoned'))dis.push('Poisoned');
+  if(meCond('Restrained'))dis.push('Restrained');if(meCond('Prone'))dis.push('Prone');
+  if(meCond('Frightened')&&s.fearVisible)dis.push('Frightened (synlig kilde)');
+  if(s.exhaustion>=3)dis.push('Exhaustion 3+');
+  if(meCond('Invisible')&&!t.canSeeVargo)adv.push('Invisible');
+  if(hasC(t,'Blinded'))adv.push('Mål Blinded');if(hasC(t,'Restrained'))adv.push('Mål Restrained');
+  if(['Paralyzed','Stunned','Unconscious'].some(c=>hasC(t,c)))adv.push('Mål incapacitated');
+  if(hasC(t,'Petrified'))adv.push('Mål Petrified');
+  if(hasC(t,'Invisible')&&!a.visible)dis.push('Mål Invisible');
+  if(hasC(t,'Prone'))(a.dist<=5?adv:dis).push('Mål Prone: '+a.dist+' ft.');
+  if(t.dodging&&!incap(t))dis.push('Mål Dodger');
+  if(w.mode==='thrown'){if(a.dist>w.range[0])dis.push('Long range');if(a.enemyNear)dis.push('Fjende inden for 5 ft.');}
+  if(!a.visible){dis.push('Du kan ikke se målet');notes.push('Et uset mål skal stadig lokaliseres; DM afgør hit.');}
+  if(!distOk(a))notes.push('UDEN FOR VÅBNETS RANGE / REACH');
+  if(a.cover===3)notes.push('TOTAL COVER: kan ikke målrettes direkte');
+  if(a.cover===1)notes.push('Half cover: målet har +2 AC');if(a.cover===2)notes.push('Three-quarters cover: +5 AC');
+  const kind=adv.length&&dis.length?'normal (ophævet)':adv.length?'advantage':dis.length?'disadvantage':'normal';
+  return {adv,dis,notes,kind};
 }
-
-if(!s.attacks||!Array.isArray(s.attacks)||s.attacks.length<3)
-  s.attacks=[fa(),fa(),fa()];
-
-if(typeof s.hitDice!=='number')s.hitDice=MAX_HIT_DICE;
-if(typeof s.chainsReady!=='boolean')s.chainsReady=true;
-if(typeof s.spiritShieldUsed!=='boolean')s.spiritShieldUsed=false;
-if(typeof s.inCombat!=='boolean')s.inCombat=false;
-if(typeof s.initiative!=='number')s.initiative=null;
-
-for(let i=0;i<3;i++){
-  if(!s.attacks[i]||!weapons[s.attacks[i].weapon])
-    s.attacks[i]=fa();
-  if(s.attacks[i].targetActed!==true&&s.attacks[i].targetActed!==false)
-    s.attacks[i].targetActed=null;
+function dice(a,crit=false){const w=W[a.k],rage=s.rage&&w.stat==='STR'&&(w.mode==='melee'||w.mode==='unarmed'),gwm=a.gwm&&w.heavy&&w.mode==='melee';
+  const base=a.offhand?0:(w.stat==='STR'?3:2);const flat=(w.mode==='unarmed'?1+base:base)+(rage?2:0)+(gwm?10:0);
+  const extra=a.surprise?(crit?'4d6':'2d6'):null;
+  const weaponDie=w.dice?(crit?(parseInt(w.dice)*2)+w.dice.replace(/^[0-9]+/,''):w.dice):'';
+  return `${weaponDie}${extra?(weaponDie?' + ':'')+extra:''}${(weaponDie||extra)?' + ':''}${flat} ${w.type.toLowerCase()}${magical(a)?' (magical)':''}`;
 }
-
-for(const k of ['bless','externalAdv','externalDis']){
-  if(typeof s[k]!=='boolean')s[k]=false;
+function hitBonus(a){return (W[a.k].stat==='STR'?6:5)-(a.gwm&&W[a.k].heavy&&W[a.k].mode==='melee'?5:0);}
+function showStatus(){const hp=Math.max(0,Math.min(100,s.hp/hpCap()*100));el('hpBar').style.width=hp+'%';el('hpBar').style.background=hp<=25?'#d05d5d':hp<=50?'#e2ab47':'#53a678';
+  el('hpTop').textContent=`${s.hp}/${hpCap()}`;el('hpDetail').textContent=`${s.hp}/${hpCap()} • Temp ${s.temp}`;el('rageTop').textContent=s.rage?'ON':'OFF';el('rageUsesTop').textContent=`${s.rages}/${MAX_RAGE}`;
+  el('initTop').textContent=s.initiative??'—';el('roundTop').textContent=s.combat?`Runde ${s.round} • ${s.phase==='self'?'Vargos tur':'Andres ture'}`:'Uden for combat';
+  el('hdTop').textContent=`Hit Dice ${s.hitDice}/${MAX_DICE}`;el('chainsTop').textContent=`Chains ${s.chains}/1${s.attuned?' • Attuned':' • Ikke attuned'}`;
+  el('log').textContent=s.lastInfo;el('undo').disabled=history.length===0;
+  el('combatButtons').innerHTML=s.combat?`<button onclick="endOwnTurn()" ${s.phase==='self'?'':'disabled'}>AFSLUT MIN TUR</button><button class="good" onclick="startOwnTurn()" ${s.phase==='others'?'':'disabled'}>START NÆSTE TUR</button><button class="bad" onclick="endCombat()">END COMBAT</button>`:'<button class="good" onclick="newCombat()">NEW COMBAT</button><button onclick="openRest()">SHORT REST</button><button onclick="longRest()">LONG REST</button>';
+  el('combatPanel').style.display=s.combat?'block':'none';
+  el('settingsPanel').innerHTML=`<div class="grid"><label>Aktuel HP<input type="number" min="0" max="${hpCap()}" value="${s.hp}" onchange="setNum('hp',this.value,74)"></label><label>Temp HP<input type="number" min="0" value="${s.temp}" onchange="setNum('temp',this.value,999)"></label><label>Rages tilbage<input type="number" min="0" max="4" value="${s.rages}" onchange="setNum('rages',this.value,4)"></label><label>Hit Dice tilbage<input type="number" min="0" max="6" value="${s.hitDice}" onchange="setNum('hitDice',this.value,6)"></label></div><label class="inline"><input type="checkbox" ${s.attuned?'checked':''} onchange="commit(()=>{s.attuned=this.checked;msg('Attunement opdateret')})"> Chains attuned (Barbarian)</label><label>Bless caster (ved aktiv Bless)<input value="${safe(s.blessCaster)}" placeholder="fx Cleric" onchange="setFlags('blessCaster',this.value)"></label><p class="small">${s.migrated?'Importerede gemte værdier fra den tidligere app. Tjek tallene.':'74 max HP; Shard viste 72 HP den 18/10. Ret efter næste spil.'}</p>`;
 }
-
-function save(){
-  localStorage.setItem('vargoV8',JSON.stringify(s));
+function optionList(arr,chosen){return arr.map(([k,v])=>`<option value="${safe(k)}" ${String(k)===String(chosen)?'selected':''}>${safe(v)}</option>`).join('');}
+function renderTargets(){el('targets').innerHTML=s.targets.map(t=>`<div class="mini"><div class="row"><b>${safe(t.name)}</b><span class="small">${t.ac!==''?'AC '+safe(t.ac):'AC ukendt'}</span><button class="ghost" onclick="editTarget('${t.id}')">Rediger</button></div><div class="small">${t.surprised?'Surprised • ':''}${t.dodging?'Dodge • ':''}${t.conditions.map(x=>x.name).join(', ')||'Ingen conditions'}</div></div>`).join('')+`<button onclick="addTarget()">+ Nyt mål</button>`;
+  if(el('who')){const previous=el('who').value;el('who').innerHTML=optionList([['self','Vargo'],...s.targets.map(t=>[t.id,t.name])],previous||'self');}
+  el('conditionsOut').innerHTML=sourceList('self',s.conditions)+s.targets.map(t=>sourceList(t.id,t.conditions)).join('');
 }
-
-function isHit(r){
-  return r==='hit'||r==='crit';
+function sourceList(id,arr){return `<div class="small"><b>${id==='self'?'Vargo':safe(target(id)?.name||id)}</b>: ${arr.length?arr.map(e=>`<button class="chip" onclick="removeCondition('${id}',${e.id})">${safe(e.name)} (${safe(e.source)}) ×</button>`).join(' '):'Ingen conditions'}</div>`;}
+function renderCombat(){
+  el('rageBtn').textContent=s.rage?'RAGE ON':'START RAGE (BONUS)';el('rageBtn').className=s.rage?'active':'';
+  el('rageBtn').disabled=s.phase!=='self'||incap()||(!s.rage&&!!s.bonus)||(!s.rage&&s.rages<1);
+  el('recklessBtn').textContent=`RECKLESS ${s.reckless?'ON':'OFF'}`;el('recklessBtn').className=s.reckless?'active':'';
+  el('recklessBtn').disabled=s.phase!=='self'||s.attacks.some(a=>a.result&&W[a.k].mode==='melee'&&W[a.k].stat==='STR')||incap();
+  el('phase').textContent=`Action: ${s.action||'Ledig'} • Bonus: ${s.bonus||'Ledig'} • Reaction: ${s.reaction||'Ledig'} • Movement ${s.moveUsed}/${movement()} ft.`+(incap()?' • UDE AF STAND TIL AT HANDLE (incapacitated / 0 HP)':'');
+  el('bless').checked=s.bless;el('adv').checked=s.extAdv;el('dis').checked=s.extDis;el('fearVisible').checked=s.fearVisible;
+  el('hand').value=s.hands;el('move').value=s.moveUsed;
+  el('initiative').value=s.initiative??'';
+  el('actionSelect').value=s.action||'';
+  el('attackCards').innerHTML=s.attacks.map((a,i)=>card(a,i)).join('')+(s.bonusAttack?card(s.bonusAttack,2):'');
+  const meleeCrit=s.attacks.some(a=>(a.result==='crit'||(a.kill&&a.result==='hit'))&&W[a.k].mode==='melee');
+  const light=s.attacks.some(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');
+  const canBonus=!s.bonus&&s.phase==='self'&&s.action==='Attack'&&!incap();
+  el('bonusButtons').innerHTML=`<button ${canBonus&&meleeCrit?'':'disabled'} onclick="beginBonus('GWM')">GWM BONUS</button><button ${canBonus&&light&&s.hands==='dual'?'':'disabled'} onclick="beginBonus('TWF')">TWO-WEAPON</button><div class="small">GWM kræver melee crit/kill. TWF kræver to forskellige light melee-våben i hænderne. Rage bruger samme bonus action.</div>`;
+  el('reactionButtons').innerHTML=`<button ${s.rage&&!s.reaction&&s.combat&&!incap()?'':'disabled'} onclick="spiritShield()">SPIRIT SHIELD 2d6</button><button ${!s.reaction&&s.phase==='others'&&!incap()?'':'disabled'} onclick="opportunity()">OPPORTUNITY ATTACK</button><div class="small">Spirit Shield: en anden creature, synlig inden for 30 ft. Opportunity Attack: når en synlig fjende forlader din reach; normalt 5 ft. på dens tur.</div>`;
+  el('apStatus').innerHTML=s.ap?`AP: <b>${safe(target(s.ap)?.name||'Ukendt')}</b> • disadvantage på angreb mod andre end Vargo; andre får resistance mod skaden fra målets angreb. Gælder indtil starten af Vargos næste tur, mens Rage varer.`:'AP: Intet mål markeret denne tur.';
+  el('chainStatus').innerHTML=`<b>Chains:</b> ${s.chains}/1 • ${s.attuned?'Attuned':'KRÆVER ATTUNEMENT'} • Passive magical kun under Rage på melee weapon attacks. ${s.chainsDebuff?`Aktiv debuff på <b>${safe(target(s.chainsDebuff)?.name||'ukendt')}</b>: −10 ft., ingen reactions indtil starten af Vargos næste tur.`:''}`;
+  el('bonusUsed').textContent=s.bonus?`Bonus brugt: ${s.bonus}`:'Bonus action ledig';
 }
-
-function apIndex(){
-  if(!s.rage)return -1;
-  for(let i=0;i<3;i++){
-    if(isHit(s.attacks[i].result))return i;
-  }
-  return -1;
-}
-
-function meleeGwmTrigger(){
-  return s.attacks.slice(0,2).some(a=>
-    weapons[a.weapon].melee&&
-    (a.result==='crit'||(isHit(a.result)&&a.kill))
-  );
-}
-
-function bonusAvailable(){
-  return meleeGwmTrigger()&&!s.bonusUsed;
-}
-
-function hitMod(i){
-  const a=s.attacks[i],w=weapons[a.weapon];
-  return 6-((a.gwm&&w.gwm)?5:0);
-}
-
-function advSources(i){
-  const out=[],w=weapons[s.attacks[i].weapon];
-  if(s.reckless&&w.strMelee)out.push('Reckless');
-  if(s.externalAdv)out.push('Advantage');
-  return out;
-}
-
-function disSources(i){
-  const out=[];
-  if(s.externalDis)out.push('Disadvantage');
-  return out;
-}
-
-function attackState(i){
-  const a=advSources(i),d=disSources(i);
-  if(a.length&&d.length)return 'normal';
-  if(a.length)return 'adv';
-  if(d.length)return 'dis';
-  return 'normal';
-}
-
-function hitText(i){
-  const m=hitMod(i);
-  const mod=`${m>=0?'+':''}${m}${s.bless?' +1d4':''}`;
-  const st=attackState(i);
-  if(st==='adv')return `2d20 — behold highest ${mod}`;
-  if(st==='dis')return `2d20 — behold lowest ${mod}`;
-  return `1d20 ${mod}`;
-}
-
-function attackNote(i){
-  const a=advSources(i),d=disSources(i),p=[];
-  if(a.length)p.push('ADV: '+a.join(', '));
-  if(d.length)p.push('DIS: '+d.join(', '));
-  if(a.length&&d.length)p.push('→ cancel');
-  if(s.bless)p.push('Bless +1d4');
-  return p.length?p.join(' • '):'Normal attack roll.';
-}
-
-function dmgFormula(i,crit=false){
-  const a=s.attacks[i],w=weapons[a.weapon];
-  const surprise=(a.targetActed===false);
-  let flat=w.flat+(s.rage&&w.strMelee?2:0)+(a.gwm&&w.gwm?10:0);
-
-  if(w.die==='1d4'){
-    let d4=crit?2:1,d6=surprise?(crit?4:2):0;
-    return `${d4}d4${d6?` + ${d6}d6`:''} +${flat}`;
-  }
-
-  let n=parseInt(w.die);
-  if(surprise)n+=2;
-  if(crit)n*=2;
-  return `${n}d6+${flat}`;
-}
-
-function attackCard(i){
-  const a=s.attacks[i],w=weapons[a.weapon],bonus=i===2;
-  if(bonus&&!bonusAvailable())return '';
-
-  const crit=a.result==='crit',ap=apIndex()===i;
-
-  return `
-  <section class="card attack ${bonus?'bonus':''}">
-    <div class="stephead">
-      <h2>
-        <span class="stepnum">${bonus?'5':i+3}</span>
-        ${bonus?'GWM BONUS ATTACK':'ATTACK '+(i+1)}
-      </h2>
-    </div>
-
-    ${bonus?'<div class="effect good"><b>Bonus Action attack unlocked</b> by melee crit/kill.</div>':''}
-
-    <label>Weapon</label>
-    <select onchange="setWeapon(${i},this.value)">
-      ${Object.entries(weapons).map(([k,v])=>
-        `<option value="${k}" ${a.weapon===k?'selected':''}>${v.name}</option>`
-      ).join('')}
-    </select>
-
-    ${w.gwm?`
-      <div class="row" style="margin-top:8px">
-        <button class="${a.gwm?'active':''}" onclick="toggleGwm(${i})">
-          GWM ${a.gwm?'ON':'OFF'}
-        </button>
-      </div>
-      <div class="explain">
-        <b>GWM:</b> −5 to hit, +10 damage. Vælges før dette attack.
-      </div>
-    `:''}
-
-    <div class="explain">
-      <b>Surprise Attack:</b>
-      Har dette mål allerede haft sin 1. tur, eller kommer det før dig i initiativ?
-    </div>
-    <div class="choice2" style="margin-top:8px">
-      <button class="${a.targetActed===false?'active':''}"
-        onclick="setAttackTargetActed(${i},false)">NEJ</button>
-      <button class="${a.targetActed===true?'active':''}"
-        onclick="setAttackTargetActed(${i},true)">JA</button>
-    </div>
-
-    <div class="rollbox">
-      <div class="rolltitle">TO HIT</div>
-      <div class="roll">${hitText(i)}</div>
-      <div class="small">${attackNote(i)}</div>
-    </div>
-
-    <div class="rollbox">
-      <div class="rolltitle">${crit?'CRIT DAMAGE':'DAMAGE'}</div>
-      <div class="roll">${dmgFormula(i,crit)}</div>
-      <div class="small">
-        ${w.type.toUpperCase()}
-        ${a.targetActed===false?' • Surprise +2d6 included':''}
-      </div>
-    </div>
-
-    <div class="small">
-      ${w.melee?`Reach: ${w.reach} på Vargos egen tur`:`Range: ${w.range}`}
-    </div>
-
-    <div class="segment">
-      <button class="${a.result==='miss'?'bad':''}" onclick="setResult(${i},'miss')">MISS</button>
-      <button class="${a.result==='hit'?'good':''}" onclick="setResult(${i},'hit')">HIT</button>
-      <button class="${a.result==='crit'?'warn':''}" onclick="setResult(${i},'crit')">CRIT</button>
-      <button class="${a.kill?'bad':''}" onclick="toggleKill(${i})">KILL ${a.kill?'✓':''}</button>
-    </div>
-
-    ${ap?`
-      <div class="effect good">
-        <b>Ancestral Protectors ACTIVE</b>
-        Dette er den første creature Vargo ramte denne tur.
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="${s.chainsReady?'warn':''}"
-          ${s.chainsReady?'':'disabled'}
-          onclick="activateChains(${i})">
-          ${s.chainsReady?'ACTIVATE CHAINS — 1/1':'CHAINS USED — 0/1'}
-        </button>
-      </div>
-      ${!s.chainsReady?`
-        <div class="effect warn">
-          <b>Chains ACTIVE</b>
-          No Reaction — 1 turn
-          Speed −10 ft — 1 minute
-        </div>
-      `:''}
-    `:''}
-
-    ${s.reckless&&!w.strMelee?'<div class="effect warn">Reckless gælder ikke på thrown attacks.</div>':''}
+function card(a,i){const w=W[a.k],m=mods(a),b=hitBonus(a),legal=weaponOkay(w)&&avail(a.k)>0&&distOk(a)&&a.cover!==3&&!incap()&&(s.phase==='self')&&(i===2||(!s.action||s.action==='Attack'));
+  const locked=!!a.result;const opts=Object.entries(W).map(([k,v])=>[k,`${v.n} (${v.mode})`]);const damageCrit={...a};
+  return `<section class="card attack attack${i+1}"><h3>${i===2?s.bonus+' BONUS ATTACK':`ATTACK ${i+1}`} ${locked?'✓ '+a.result.toUpperCase():''}</h3>
+   <div class="grid"><label>Våben / brug<select ${locked?'disabled':''} onchange="changeAttack(${i},'k',this.value)">${optionList(opts,a.k)}</select></label>
+   <label>Mål<select ${locked?'disabled':''} onchange="changeAttack(${i},'id',this.value)">${optionList(s.targets.map(t=>[t.id,t.name]),a.id)}</select></label>
+   <label>Afstand (ft.)<input ${locked?'disabled':''} type="number" min="0" value="${a.dist}" onchange="changeAttack(${i},'dist',this.value)"></label>
+   <label>Cover<select ${locked?'disabled':''} onchange="changeAttack(${i},'cover',this.value)">${optionList([[0,'Ingen'],[1,'Half (+2 AC)'],[2,'3/4 (+5 AC)'],[3,'Total (blokeret)']],a.cover)}</select></label></div>
+   <div class="row"><label class="inline"><input type="checkbox" ${a.visible?'checked':''} ${locked?'disabled':''} onchange="changeAttack(${i},'visible',this.checked)"> Kan se mål</label><label class="inline"><input type="checkbox" ${a.enemyNear?'checked':''} ${locked?'disabled':''} onchange="changeAttack(${i},'enemyNear',this.checked)"> Fjende indenfor 5 ft.</label>
+   ${w.heavy&&w.mode==='melee'?`<label class="inline"><input type="checkbox" ${a.gwm?'checked':''} ${locked?'disabled':''} onchange="changeAttack(${i},'gwm',this.checked)"> GWM −5/+10</label>`:''}</div>
+   <div class="rollbox"><small>TO HIT • ${m.kind.toUpperCase()}</small><div class="roll">${m.kind==='advantage'?'2d20 high':m.kind==='disadvantage'?'2d20 low':'1d20'} ${b>=0?'+':''}${b}${s.bless?' +1d4 Bless':''}</div><small>${safe([...m.adv.map(x=>'ADV: '+x),...m.dis.map(x=>'DIS: '+x),...m.notes].join(' • ')||'Ingen yderligere modifiers')}</small></div>
+   <div class="rollbox"><small>DAMAGE (NORMAL / CRIT)</small><div class="roll">${dice(a)} <span class="small">/ CRIT ${dice(a,true)}</span></div><small>${magical(a)?'Chains: melee magical aktiv':'Ikke magical fra Chains'}${w.mode==='thrown'?' • Kast: ingen Rage damage / Reckless / Long-Limbed':''}</small></div>
+   ${!weaponOkay(w)?'<div class="warnnote">Skift hænder/udstyr først.</div>':''}${avail(a.k)===0?'<div class="warnnote">Ikke flere våben til rådighed.</div>':''}
+   ${m.notes.length?`<div class="warnnote">${safe(m.notes.join(' • '))}</div>`:''}${(hasC(target(a.id),'Paralyzed')||hasC(target(a.id),'Unconscious'))&&a.dist<=5?'<div class="warnnote">2014: Et hit inden for 5 ft. mod Paralyzed/Unconscious er et critical hit. Vælg CRIT ved registrering.</div>':''}
+   ${locked?`<div class="row"><button class="ghost" onclick="correctAttack(${i})">RET / FORTRYD ANGREB</button>${a.surprise?' <span class="tag">Surprise +2d6 brugt</span>':''}${s.ap===a.id&&s.rage?'<span class="tag">Ancestral Protectors</span>':''}</div>${(a.result==='hit'||a.result==='crit')&&s.ap===a.id?`<button class="warn" ${!s.attuned||!s.rage||!s.chains?'disabled':''} onclick="activateChains(${i})">CHAINS ${s.chains}/1 — BRUG PÅ DETTE HIT</button>`:''}`:
+   `<div class="row"><button class="good" ${legal?'':'disabled'} onclick="recordAttack(${i},'hit')">HIT</button><button class="warn" ${legal?'':'disabled'} onclick="recordAttack(${i},'crit')">CRIT</button><button ${legal?'':'disabled'} onclick="recordAttack(${i},'miss')">MISS</button><label class="inline"><input type="checkbox" ${a.kill?'checked':''} onchange="changeAttack(${i},'kill',this.checked)"> Kill på hit</label></div>`}
+   <div class="small">${w.mode==='thrown'?`Range ${w.range.join('/')} ft.`:`Reach ${s.phase==='self'?'10':'5'} ft. på ${s.phase==='self'?'egen tur':'andres tur'}`}</div>
   </section>`;
 }
-
-function render(){
-  document.getElementById('attacks').innerHTML=[0,1,2].map(attackCard).join('');
-  document.getElementById('initiativeTop').textContent=s.initiative===null?'—':s.initiative;
-  document.getElementById('hpText').textContent=`${s.hp} / ${MAX_HP}`;
-
-  const hpPct=Math.max(0,Math.min(100,s.hp/MAX_HP*100));
-  document.getElementById('hpFill').style.width=hpPct+'%';
-  document.getElementById('hpFill').className='hpfill'+(hpPct<25?' hp-low':hpPct<=50?' hp-mid':'');
-
-  document.getElementById('hpInput').value=s.hp;
-  document.getElementById('hpDetail').textContent=`${s.hp} / ${MAX_HP}`;
-  document.getElementById('hitDiceTop').textContent=`Hit Dice ${s.hitDice} / ${MAX_HIT_DICE}`;
-  document.getElementById('hitDiceDetail').textContent=`${s.hitDice} / ${MAX_HIT_DICE} d12`;
-
-  document.getElementById('chainsStatus').innerHTML=`<b>Chains:</b> ${s.chainsReady?'1 / 1':'0 / 1'} per Short Rest`;
-
-  const ssb=document.getElementById('spiritShieldBtn');
-  ssb.disabled=(!s.rage||s.spiritShieldUsed);
-  ssb.textContent=s.spiritShieldUsed?'SPIRIT SHIELD USED':(s.rage?'USE SPIRIT SHIELD':'SPIRIT SHIELD — RAGE REQUIRED');
-
-  document.getElementById('roundText').textContent=s.inCombat?`Round ${s.round}`:'Out of combat';
-  document.getElementById('rageTop').textContent=s.rage?'ON':'OFF';
-  document.getElementById('rageUsesTop').textContent=`${s.rages} / ${MAX_RAGES}`;
-
-  const rb=document.getElementById('rageBtn');
-  rb.textContent=s.rage?(s.rageStarted?'Rage started':'Rage active'):'Start Rage';
-  rb.className=s.rage?'active':'';
-
-  const rec=document.getElementById('recklessBtn');
-  rec.textContent=`Reckless ${s.reckless?'ON':'OFF'}`;
-  rec.className=s.reckless?'active':'';
-
-  document.getElementById('blessBtn').textContent=`Bless ${s.bless?'ON':'OFF'}`;
-  document.getElementById('blessBtn').className=s.bless?'active':'';
-
-  document.getElementById('extAdvBtn').textContent=`Advantage ${s.externalAdv?'ON':'OFF'}`;
-  document.getElementById('extAdvBtn').className=s.externalAdv?'good':'';
-
-  document.getElementById('extDisBtn').textContent=`Disadvantage ${s.externalDis?'ON':'OFF'}`;
-  document.getElementById('extDisBtn').className=s.externalDis?'bad':'';
-
-  document.getElementById('attackedBtn').textContent=`Angreb hostile? ${s.attacked?'JA':'NEJ'}`;
-  document.getElementById('attackedBtn').className=s.attacked?'good':'';
-
-  document.getElementById('damagedBtn').textContent=`Tog damage? ${s.damaged?'JA':'NEJ'}`;
-  document.getElementById('damagedBtn').className=s.damaged?'good':'';
-
-  const rc=document.getElementById('rageContinueText');
-  if(!s.rage){
-    rc.textContent='Rage er ikke aktiv.';
-    rc.className='effect';
-  } else if(s.attacked||s.damaged){
-    rc.innerHTML='<b>Rage fortsætter.</b>';
-    rc.className='effect good';
-  } else {
-    rc.innerHTML='<b>Rage slutter</b>, hvis begge stadig er NEJ ved slutningen af turen.';
-    rc.className='effect warn';
-  }
-
-  document.getElementById('undoBtn').disabled=!s.lastDamage;
-  document.getElementById('shortRestBtn').disabled=s.inCombat;
-  document.getElementById('longRestBtn').disabled=s.inCombat;
-  document.getElementById('newTurnBtn').disabled=!s.inCombat;
-  document.getElementById('endCombatBtn').disabled=!s.inCombat;
-
-  document.getElementById('turnCard').style.display=s.inCombat?'block':'none';
-  document.getElementById('initiativeBlock').style.display=(s.inCombat&&s.round===1)?'block':'none';
-
-  const ir=document.getElementById('initiativeResult');
-  if(s.initiative!==null){
-    ir.className='effect good';
-    ir.innerHTML=`<b>Initiativ:</b> ${s.initiative}`;
-  } else {
-    ir.className='effect hidden';
-    ir.innerHTML='';
-  }
-
-  document.getElementById('attacks').style.display=s.inCombat?'block':'none';
-  document.getElementById('endTurnCard').style.display=s.inCombat?'block':'none';
-  save();
+function renderInventory(){el('inventory').innerHTML=`<div class="grid">${[['gs','Greatsword'],['hm','Handaxe'],['jm','Javelins'],['ds','Dagger']].map(([k,label])=>`<label>${label} tilbage<input type="number" min="0" max="99" value="${s.gear[k]}" onchange="commit(()=>{s.gear.${k}=Math.max(0,Number(this.value)||0)})"></label>`).join('')}<label>Potions of Healing<input type="number" min="0" value="${s.potions}" onchange="setNum('potions',this.value,99)"></label><label>Gold (gp)<input type="number" min="0" value="${s.gold}" onchange="setNum('gold',this.value,99999)"></label></div><button class="good" onclick="drinkPotion()" ${s.potions<1?'disabled':''}>DRINK POTION — 2d4+2 (2014 Action)</button><p class="small">Explorer's Pack: bedroll, hempen rope 50 ft., mess kit, 9 rationer, tinderbox, 10 torches, waterskin. Øvrigt: bear claw necklace, horn cup, hunting trap, traveler’s clothes, animal trophy. Shard-vægt 79 lb. før Chains; ukendt vægt for Chains.</p>`;
 }
-
-function toggleRage(){
-  if(!s.inCombat)return;
-  if(s.rage){
-    s.rage=false;s.rageStarted=false;
-  } else {
-    if(s.rages<=0)return alert('Ingen Rage uses tilbage.');
-    s.rage=true;s.rages--;s.rageStarted=true;s.bonusUsed=true;
-  }
-  render();
+function render(){showStatus();renderTargets();renderCombat();renderInventory();el('restControls').innerHTML=`<button class="good" onclick="shortRest()" ${s.combat?'disabled':''}>TAG SHORT REST</button><button onclick="longRest()" ${s.combat?'disabled':''}>TAG LONG REST</button><div class="row"><label>Hit Die (1d12)<input id="die" type="number" min="1" max="12" placeholder="1–12"></label><button onclick="spendDie()" ${s.combat||s.hitDice===0?'disabled':''}>Brug Hit Die (+3 CON)</button></div><p class="small">Long Rest gendanner maks. HP og Rages samt op til 3 brugte Hit Dice (2014). Short Rest gendanner Chains, ikke Rages eller HP automatisk.</p>`;
+  el('defense').innerHTML=`<div class="row"><label>Incoming damage components: beløb og type (og evt. beskyttelse).<span class="small"> Rage giver resistance også mod magical B/P/S.</span></label></div><div id="damageRows"></div><button onclick="damageRow()">+ Damage component</button><button class="bad" onclick="takeDamage()">TAKE DAMAGE</button><hr><div class="row"><label>Heal HP<input id="heal" type="number" min="1"></label><button class="good" onclick="healNow()">HEAL</button></div><div class="row"><button onclick="deathSave('success')" ${s.hp>0||s.deaths.dead?'disabled':''}>Death save success</button><button onclick="deathSave('failure')" ${s.hp>0||s.deaths.dead?'disabled':''}>Death save fail</button><button onclick="deathSave('nat20')" ${s.hp>0||s.deaths.dead?'disabled':''}>Natural 20</button><button onclick="deathSave('nat1')" ${s.hp>0||s.deaths.dead?'disabled':''}>Natural 1</button><button onclick="stabilize()" ${s.hp>0?'disabled':''}>Stabilize</button></div><p class="small">Death saves: ${s.deaths.success}/3 succes • ${s.deaths.fail}/3 failures • ${s.deaths.dead?'DEAD':s.deaths.stable?'STABLE':s.hp===0?'UNCONSCIOUS':'Conscious'}.</p>`;
+  if(el('damageRows').children.length===0)damageRow();save();
 }
-
-function toggleReckless(){
-  if(!s.inCombat)return;
-  s.reckless=!s.reckless;
-  render();
+function setNum(k,v,max){commit(()=>{s[k]=Math.max(0,Math.min(k==='hp'?hpCap():max,Math.trunc(nval(v))));msg(k+' rettet manuelt')});}
+function changeAttack(i,k,v){commit(()=>{const a=i===2?s.bonusAttack:s.attacks[i];a[k]=['dist','cover'].includes(k)?Math.max(0,nval(v)):v;if(k==='k'){a.gwm=false;}if(k==='id')a.dist=5;});}
+function recordAttack(i,result){const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result||s.phase!=='self'||incap())return;
+  const w=W[a.k];if(!weaponOkay(w)||avail(a.k)<=0||!distOk(a)||a.cover===3)return;
+  if(s.conditions.some(x=>x.name==='Charmed'&&x.source.toLowerCase()===target(a.id).name.toLowerCase()))return alert('Charmed: du kan ikke angribe den creature, der charmede dig.');
+  if(result==='hit'&&a.dist<=5&&(hasC(target(a.id),'Paralyzed')||hasC(target(a.id),'Unconscious')))result='crit';
+  if(i<2&&s.action&&s.action!=='Attack')return;
+  if(i===1&&!s.attacks[0].result)return alert('Registrér første angreb først.');
+  if(i===2&&s.bonus!== (s.bonusAttackType==='TWF'?'TWF':'GWM'))return;
+  commit(()=>{if(i<2)s.action='Attack';a.result=result;s.attacked=true;
+    if(w.mode==='thrown'){const key=a.k.startsWith('h')?'hm':a.k.startsWith('j')?'jm':'ds';s.gear[key]--;}
+    const t=target(a.id);if(result!=='miss'){
+      if(s.round===1&&s.turnNumber===1&&t.surprised&&!s.surpriseUsed){a.surprise=true;s.surpriseUsed=true;}
+      if(s.rage&&!s.ap)s.ap=a.id;
+    }
+    msg(`${w.n} mod ${t.name}: ${result.toUpperCase()} • ${dice(a,result==='crit')}`);
+  });
 }
+function correctAttack(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a?.result)return;commit(()=>{if(W[a.k].mode==='thrown'){const k=a.k.startsWith('h')?'hm':a.k.startsWith('j')?'jm':'ds';s.gear[k]++;}a.result='';a.surprise=false;if(!s.attacks.some(x=>x.surprise)&&!s.bonusAttack?.surprise)s.surpriseUsed=false;
+  // genberegn første AP ud fra tilbageværende registrerede hits i faktisk rækkefølge
+  const first=[...s.attacks,s.bonusAttack].filter(Boolean).find(x=>x.result==='hit'||x.result==='crit');s.ap=s.rage?(first?.id||null):null;if(s.chainsDebuff&&s.chainsDebuff!==s.ap){s.chainsDebuff=null;s.chains=1;}
+  s.attacked=[...s.attacks,s.bonusAttack].filter(Boolean).some(x=>x.result);
+  if(i===2){s.bonus='';s.bonusAttack=null;s.bonusAttackType='';}
+  msg('Angreb fortrudt. Kontrollér efterfølgende AP/Chains, hvis målet er ændret.');});}
+function beginBonus(type){if(s.bonus||s.phase!=='self'||s.action!=='Attack'||incap())return;
+  commit(()=>{s.bonus=type;s.bonusAttackType=type;if(type==='TWF'){const used=s.attacks.find(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');s.bonusAttack=aNew(used?.k.startsWith('h')?'ds':'hm');s.bonusAttack.offhand=true;}else{s.bonusAttack=aNew();}msg(type+' bonus action brugt — bonusangreb klar.');});}
+function turnAction(v){if(!v||s.phase!=='self'||incap())return;commit(()=>{if(s.action&&s.action!==v)return alert('Action allerede brugt; brug Undo hvis det var en fejl.');s.action=v;msg('Action: '+v+(v==='Disengage'?' • Ingen opportunity attacks fra din movement resten af turen.':''));});}
+function rageToggle(){if(s.phase!=='self'||incap())return;commit(()=>{if(s.rage){if(s.bonus)return alert('Du skal have en ledig bonus action for at afslutte Rage frivilligt.');s.rage=false;s.bonus='End Rage';s.ap=null;msg('Rage afsluttet.');return;}if(s.bonus||s.rages<1)return;s.rage=true;s.rageTurns=0;s.rages--;s.bonus='Rage';msg('Rage aktiv: STR melee +2 damage; resistance B/P/S (også magical).');});}
+function recklessToggle(){if(s.phase!=='self'||s.attacks.some(a=>a.result&&W[a.k].mode==='melee'&&W[a.k].stat==='STR')||incap())return;commit(()=>{s.reckless=!s.reckless;s.recklessDefense=s.reckless;});}
+function initiativeSet(v){commit(()=>{s.initiative=v===''?null:Math.trunc(nval(v));});}
+function movement(){if(meCond('Grappled')||meCond('Restrained')||meCond('Paralyzed')||meCond('Petrified')||meCond('Stunned')||meCond('Unconscious')||s.exhaustion>=5)return 0;return (s.exhaustion>=2?20:40)*(s.action==='Dash'?2:1);}
+function changeHands(v){if(s.hands===v)return;commit(()=>{if(s.interaction){msg('Våbenskift kræver yderligere object interaction / muligvis action efter 2014 RAW. Afklar og korrigér manuelt.');}else{s.interaction=true;msg('Fri object interaction anvendt ved våbenskift.');}s.hands=v;});}
+function endOwnTurn(){if(s.phase!=='self')return;commit(()=>{if(s.rage&&incap()){s.rage=false;s.ap=null;msg('Rage sluttede: Vargo er unconscious/incapacitated; evt. andre effekter vurderes særskilt.');}if(s.rage){s.rageTurns++;if(!s.attacked&&!s.damaged){s.rage=false;s.ap=null;msg('Rage ophørte: ingen hostile attack eller skade siden sidste tur.');}else if(s.rageTurns>=10){s.rage=false;s.ap=null;msg('Rage ophørte efter 1 minut.');}else msg('Vargos tur afsluttet — Rage fortsætter.');}else msg('Vargos tur afsluttet.');s.attacked=false;s.damaged=false;s.phase='others';});}
+function startOwnTurn(){if(s.phase!=='others')return;commit(()=>{s.phase='self';s.round++;s.turnNumber++;s.action='';s.bonus='';s.reaction='';s.moveUsed=0;s.interaction=false;s.reckless=false;s.recklessDefense=false;s.ap=null;s.chainsDebuff=null;s.attacks=[aNew(),aNew()];s.bonusAttack=null;s.bonusAttackType='';msg('Ny tur: reaction genopfrisket, AP og Chains-effekt fra sidste tur udløbet.');});}
+function newCombat(){if(s.combat&&!confirm('En kamp er aktiv. Vil du starte en ny?'))return;
+  const keep=s.rage?confirm('Rage er allerede aktiv. Behold denne igangværende Rage i den nye kamp?'):false;
+  commit(()=>{s.resting=false;s.combat=true;s.round=1;s.turnNumber=1;s.phase='self';s.initiative=null;s.action='';s.bonus='';s.reaction='';s.moveUsed=0;s.interaction=false;s.reckless=false;s.recklessDefense=false;s.ap=null;s.chainsDebuff=null;s.surpriseUsed=false;s.attacked=false;s.damaged=false;s.attacks=[aNew(),aNew()];s.bonusAttack=null;s.bonusAttackType='';if(!keep)s.rage=false;msg('Ny combat. HP, Rages, Hit Dice, kastede våben og Chains-uses er bevaret.');});}
+function endCombat(){if(!s.combat)return;const keep=s.rage?confirm('Beholde aktiv Rage efter kampen? OK = behold, Annuller = afslut Rage.'):false;commit(()=>{s.combat=false;s.phase='idle';s.action='';s.bonus='';s.reaction='';s.ap=null;s.chainsDebuff=null;if(!keep)s.rage=false;s.reckless=false;s.recklessDefense=false;msg('Kamp afsluttet. Ressourcer bevares.');});}
+function activateChains(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!s.rage||!s.attuned||!s.chains||!a||!['hit','crit'].includes(a.result)||s.ap!==a.id)return;commit(()=>{s.chains=0;s.chainsDebuff=a.id;msg(`Chains: ${target(a.id).name} mister 10 ft. speed og kan ikke tage reactions indtil starten af Vargos næste tur.`);});}
+function spiritShield(){if(!s.combat||!s.rage||s.reaction||incap())return;const name=prompt('Hvem (en anden creature end Vargo) beskyttes? Navn:');if(!name||name.trim().toLowerCase()==='vargo')return;const dist=Number(prompt('Afstand til væsnet (ft.)?','30'));if(!Number.isFinite(dist)||dist>30||dist<0)return alert('Målet skal være inden for 30 ft.');if(!confirm('Kan Vargo se væsnet, og tager det damage netop nu?'))return;const roll=prompt('2d6 reduktion — indtast terningresultat (2–12) eller lad stå tomt for manuel rul:','');if(roll!==null&&roll!==''&&(!Number.isInteger(Number(roll))||Number(roll)<2||Number(roll)>12))return alert('2d6 skal være 2–12.');commit(()=>{s.reaction='Spirit Shield';msg(`Spirit Shield på ${name}: reducerer skaden med ${roll||'2d6 (rul ved bordet)'}. Reaction brugt.`);});}
+function opportunity(){if(!s.combat||s.phase!=='others'||s.reaction||incap())return;const weapon=prompt('Opportunity Attack våben: gs, hm, jm, ds, dd eller ua','gs');if(!W[weapon]||W[weapon].mode==='thrown')return alert('Vælg et melee attack (gs/hm/jm/ds/dd/ua).');if(!confirm('Forlader en synlig creature din reach? (Normalt 5 ft. på andres tur.)'))return;commit(()=>{s.reaction='Opportunity Attack';const aa=aNew(weapon);msg(`Opportunity Attack: 1d20+${hitBonus(aa)}; damage ${dice(aa)}. Reaction brugt. Reckless gælder ikke på andres tur.`);});}
+function openRest(){el('restPanel').open=true;el('restPanel').scrollIntoView({behavior:'smooth',block:'center'});}
+function shortRest(){if(s.combat)return;commit(()=>{s.chains=1;s.resting=true;msg('Short Rest: Chains 1/1. Brug Hit Dice-healing separat. Rages er uændrede.');});}
+function spendDie(){if(s.combat||!s.resting||s.hitDice<1)return alert('Tag først en Short Rest for at bruge Hit Dice.');const d=Number(el('die')?.value);if(!Number.isInteger(d)||d<1||d>12)return alert('Indtast et faktisk d12-resultat fra 1 til 12.');commit(()=>{s.hitDice--;const old=s.hp;s.hp=Math.min(hpCap(),s.hp+d+3);msg(`Hit Die: ${d}+3 CON; HP ${old} → ${s.hp}. Hit Dice ${s.hitDice}/${MAX_DICE}`);});}
+function longRest(){if(s.combat)return;commit(()=>{s.hp=HP;s.temp=0;s.rages=MAX_RAGE;s.hitDice=Math.min(MAX_DICE,s.hitDice+3);s.chains=1;s.rage=false;s.resting=false;s.deaths={success:0,fail:0,stable:false,dead:false};msg('Long Rest: fuld HP, 4 Rages, +3 Hit Dice (maks. 6), Chains 1/1. Potions/kastede våben er ikke gendannet.');});}
+function drinkPotion(){if(s.potions<1||s.hp===HP)return;if(s.combat&&s.phase!=='self')return alert('Potion kan kun drikkes på Vargos tur.');if(s.combat&&s.action&&s.action!=='Potion')return alert('Action er allerede brugt.');const x=Number(prompt('Rul 2d4+2 og indtast TOTAL (4–10):'));if(!Number.isInteger(x)||x<4||x>10)return;commit(()=>{if(s.combat)s.action='Potion';s.potions--;const before=s.hp;s.hp=Math.min(hpCap(),s.hp+x);s.deaths={success:0,fail:0,stable:false,dead:false};msg(`Potion 2d4+2 = ${x}; HP ${before} → ${s.hp}; ${s.potions} tilbage. 2014 Action brugt.`);});}
+function healNow(){const v=Number(el('heal')?.value);if(!Number.isFinite(v)||v<=0)return;commit(()=>{const old=s.hp;s.hp=Math.min(hpCap(),s.hp+Math.trunc(v));if(old===0&&s.hp>0)s.deaths={success:0,fail:0,stable:false,dead:false};msg(`Healing: ${old} → ${s.hp}.`);});}
+function damageRow(){const x=document.createElement('div');x.className='damage-row';x.innerHTML=`<input class="damount" type="number" min="0" placeholder="Damage"><select class="dtype">${TYPES.map(x=>`<option>${x}</option>`).join('')}</select><label class="inline"><input type="checkbox" class="dmagic"> magical</label><select class="dmod"><option value="auto">Auto / Rage</option><option value="resist">Resistance</option><option value="immune">Immunity</option><option value="vuln">Vulnerability</option><option value="both">Resist + vulnerable</option><option value="normal">Ingen beskyttelse</option></select><button class="ghost" onclick="this.parentElement.remove()">✕</button>`;el('damageRows').appendChild(x);}
+function takeDamage(){const items=[...document.querySelectorAll('#damageRows .damage-row')].map(x=>({n:Number(x.querySelector('.damount').value),type:x.querySelector('.dtype').value,mod:x.querySelector('.dmod').value,magical:x.querySelector('.dmagic').checked})).filter(x=>x.n>0);if(!items.length)return;
+  commit(()=>{let total=0;const steps=[];for(const item of items){let x=item.n,res=BPS.includes(item.type)&&s.rage;if(item.mod==='normal')res=false;if(item.mod==='resist'||item.mod==='both')res=true;let immune=item.mod==='immune',vuln=item.mod==='vuln'||item.mod==='both';if(immune)x=0;else{if(res)x=Math.floor(x/2);if(vuln)x*=2;}total+=x;steps.push(`${item.n} ${item.type}${item.magical?' magical':''} → ${x}${res?' (resistance)':''}${vuln?' (vulnerability)':''}`);}
+    const old=s.hp,oldTemp=s.temp;const tUsed=Math.min(total,s.temp);s.temp-=tUsed;const actual=total-tUsed;s.hp=Math.max(0,s.hp-actual);s.damaged=s.damaged||total>0;
+    if(s.hp===0){s.rage=false;s.ap=null;if(old>0){if(actual-old>=hpCap())s.deaths.dead=true;else{s.deaths.success=0;s.deaths.fail=0;s.deaths.stable=false;}}else if(actual>0){s.deaths.fail+=1;if(s.deaths.fail>=3)s.deaths.dead=true;s.deaths.stable=false;}}
+    msg(`${steps.join(' + ')} = ${total}. Temp ${oldTemp} → ${s.temp}. HP ${old} → ${s.hp}${s.deaths.dead?' • MASSIVE DAMAGE/DEAD':''}.`);
+  });el('damageRows').innerHTML='';damageRow();}
+function deathSave(kind){if(s.hp!==0||s.deaths.dead)return;commit(()=>{if(kind==='success')s.deaths.success++;if(kind==='failure')s.deaths.fail++;if(kind==='nat1')s.deaths.fail+=2;if(kind==='nat20'){s.hp=1;s.deaths={success:0,fail:0,stable:false,dead:false};}if(s.deaths.success>=3)s.deaths.stable=true;if(s.deaths.fail>=3)s.deaths.dead=true;msg('Death save registreret: '+kind);});}
+function stabilize(){if(s.hp!==0)return;commit(()=>{s.deaths={success:0,fail:0,stable:true,dead:false};msg('Stabilized ved 0 HP.');});}
+function addTarget(){const id='t'+Date.now().toString(36);commit(()=>{s.targets.push({id,name:'Nyt mål',ac:'',surprised:false,canSeeVargo:true,dodging:false,conditions:[]});});editTarget(id);}
+function editTarget(id){const t=target(id);const name=prompt('Målets navn',t.name);if(name===null)return;const ac=prompt('Målets AC (tomt hvis ukendt)',t.ac);if(ac===null)return;const surprised=confirm('Er målet faktisk SURPRISED af Vargo? (Volo Bugbear, ikke blot lavere initiative)');const seeing=confirm('Kan målet se Vargo?');const dodge=confirm('Har målet Dodge aktivt?');commit(()=>{t.name=name||t.name;t.ac=ac===''?'':Math.max(0,Number(ac)||0);t.surprised=surprised;t.canSeeVargo=seeing;t.dodging=dodge;});}
+function addCondition(){const who=el('who').value,c=el('cond').value,source=el('condSource').value.trim()||'DM / ukendt';const item={id:Date.now(),name:c,source};commit(()=>{(who==='self'?s.conditions:target(who).conditions).push(item);msg(`${c} tilføjet fra ${source}. Effekt vurderes pr. kilde.`);});}
+function removeCondition(who,id){commit(()=>{const a=who==='self'?s.conditions:target(who).conditions;const ix=a.findIndex(x=>x.id===id);if(ix>=0)a.splice(ix,1);});}
+function setExhaustion(v){commit(()=>{s.exhaustion=Math.min(6,Math.max(0,Math.trunc(nval(v))));s.hp=Math.min(s.hp,hpCap());if(s.exhaustion===6)s.deaths.dead=true;});}
+function setMove(v){commit(()=>{s.moveUsed=Math.max(0,nval(v));});}
+function setFlags(k,v){commit(()=>{s[k]=v;});}
+function applyAction(){const v=el('actionSelect').value;if(!v)return;turnAction(v);}
+function populate(){el('cond').innerHTML=optionList(CONDS.map(x=>[x,x]),'Blinded');el('who').innerHTML=optionList([['self','Vargo'],...s.targets.map(t=>[t.id,t.name])],'self');}
+// Let individual conditions remain independent by source; derived notes cover non-attack consequences.
+function conditionHelp(){el('conditionHelp').innerHTML=`<details><summary>2014 conditions og konsekvenser</summary><p class="small">Blinded: fail sight checks, attacks dis, attackers adv. Charmed: kan ikke angribe charmer; charmer adv social. Deafened: fail hearing checks. Frightened: dis attacks/checks mens kilden ses; kan ikke nærme sig kilden. Grappled: speed 0. Incapacitated: ingen actions/reactions/bonus actions. Invisible: afhænger af om målet kan se dig. Paralyzed/Stunned/Unconscious: incapacitated, fail STR/DEX saves; modstandere adv; Paralyzed og Unconscious: hits indenfor 5 ft. er crit. Petrified: incapacitated, resists damage, immune poison/disease, auto fail STR/DEX saves; attacks adv. Poisoned: dis attacks/checks. Prone: egne attacks dis; modstander adv indenfor 5 ft., ellers dis. Restrained: speed 0, egne attacks dis, attacks mod adv, DEX saves dis. Exhaustion 1–6: checks dis; speed half; attacks/saves dis; HP max half; speed 0; death. Charmed og Frightened kræver kilde/relation; automatisk beregning dækker ikke alle relationer. Conditions kan fjernes individuelt ved kilden.</p></details>`;}
+render();populate();conditionHelp();
 
-function toggleMod(k){
-  if(!s.inCombat)return;
-  s[k]=!s[k];
-  render();
-}
-
-function setInitiative(){
-  if(!s.inCombat)return;
-  const el=document.getElementById('initiativeInput');
-  const die=Number(el.value);
-  if(!Number.isInteger(die)||die<1||die>20)
-    return alert('Indtast dit d20-resultat fra 1 til 20.');
-  s.initiative=die+2;
-  el.value='';
-  render();
-}
-
-function setAttackTargetActed(i,v){
-  if(!s.inCombat)return;
-  s.attacks[i].targetActed=v;
-  render();
-}
-
-function setWeapon(i,v){
-  s.attacks[i].weapon=v;
-  if(!weapons[v].gwm)s.attacks[i].gwm=false;
-  render();
-}
-
-function toggleGwm(i){
-  if(weapons[s.attacks[i].weapon].gwm){
-    s.attacks[i].gwm=!s.attacks[i].gwm;
-    render();
-  }
-}
-
-function setResult(i,r){
-  s.attacks[i].result=s.attacks[i].result===r?'none':r;
-  s.attacked=true;
-  render();
-}
-
-function toggleKill(i){
-  s.attacks[i].kill=!s.attacks[i].kill;
-  render();
-}
-
-function toggleAttacked(){
-  s.attacked=!s.attacked;
-  render();
-}
-
-function toggleDamaged(){
-  s.damaged=!s.damaged;
-  render();
-}
-
-function setHP(v){
-  s.hp=Math.max(0,Math.min(MAX_HP,Number(v)||0));
-  render();
-}
-
-function applyHealing(){
-  const el=document.getElementById('healInput');
-  const n=Math.max(0,Number(el.value)||0);
-  if(!n)return;
-  s.hp=Math.min(MAX_HP,s.hp+n);
-  el.value='';
-  render();
-}
-
-function activateChains(i){
-  if(!s.inCombat||!s.rage||!s.chainsReady)return;
-  if(apIndex()!==i)
-    return alert('Chains kan kun aktiveres på målet med Ancestral Protectors.');
-  if(!isHit(s.attacks[i].result))
-    return alert('Chains aktiveres efter et hit.');
-  s.chainsReady=false;
-  render();
-}
-
-function useSpiritShield(){
-  if(!s.inCombat||!s.rage||s.spiritShieldUsed)return;
-  s.spiritShieldUsed=true;
-  render();
-}
-
-function resetReaction(){
-  s.spiritShieldUsed=false;
-  render();
-}
-
-function newCombat(){
-  const hp=s.hp,rages=s.rages,hitDice=s.hitDice,chainsReady=s.chainsReady;
-  s=fresh();
-  s.hp=hp;
-  s.rages=rages;
-  s.hitDice=hitDice;
-  s.chainsReady=chainsReady;
-  s.inCombat=true;
-  s.round=1;
-  s.initiative=null;
-  s.rage=false;
-  s.reckless=false;
-  s.attacks=[fa(),fa(),fa()];
-  render();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function newTurn(){
-  if(!s.inCombat)return;
-  if(s.rage&&!s.attacked&&!s.damaged)s.rage=false;
-  s.round++;
-  s.spiritShieldUsed=false;
-  s.rageStarted=false;
-  s.bonusUsed=false;
-  s.reckless=false;
-  s.attacked=false;
-  s.damaged=false;
-  s.attacks=[fa(),fa(),fa()];
-  render();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function endCombat(){
-  if(!s.inCombat)return;
-  s.inCombat=false;
-  s.initiative=null;
-  s.spiritShieldUsed=false;
-  s.rage=false;
-  s.rageStarted=false;
-  s.reckless=false;
-  s.bonusUsed=false;
-  s.attacked=false;
-  s.damaged=false;
-  s.attacks=[fa(),fa(),fa()];
-  s.round=1;
-  render();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function openShortRest(){
-  if(s.inCombat)return;
-  const p=document.getElementById('shortRestPanel');
-  p.open=true;
-  p.scrollIntoView({behavior:'smooth',block:'center'});
-}
-
-function takeShortRest(){
-  if(s.inCombat)return;
-  s.chainsReady=true;
-  s.spiritShieldUsed=false;
-  render();
-}
-
-function useHitDie(){
-  if(s.inCombat)return;
-  if(s.hitDice<=0)return alert('Ingen Hit Dice tilbage.');
-
-  const el=document.getElementById('hitDieInput');
-  const die=Number(el.value);
-
-  if(!Number.isInteger(die)||die<1||die>12)
-    return alert('Indtast dit d12-resultat fra 1 til 12.');
-
-  const heal=die+3;
-  const old=s.hp;
-  s.hitDice--;
-  s.hp=Math.min(MAX_HP,s.hp+heal);
-  const actual=s.hp-old;
-
-  const r=document.getElementById('hitDieResult');
-  r.className='effect good';
-  r.innerHTML=`<b>${die} + 3 CON = ${heal}</b> healing • HP ${old} → ${s.hp}${actual<heal?' (max HP)':''}`;
-  el.value='';
-  render();
-}
-
-function longRest(){
-  if(s.inCombat)return;
-
-  s.hp=MAX_HP;
-  s.rages=MAX_RAGES;
-  s.hitDice=Math.min(MAX_HIT_DICE,s.hitDice+Math.floor(MAX_HIT_DICE/2));
-  s.chainsReady=true;
-  s.spiritShieldUsed=false;
-  s.initiative=null;
-  s.rage=false;
-  s.rageStarted=false;
-  s.round=1;
-  s.reckless=false;
-  s.bless=false;
-  s.externalAdv=false;
-  s.externalDis=false;
-  s.bonusUsed=false;
-  s.attacked=false;
-  s.damaged=false;
-  s.attacks=[fa(),fa(),fa()];
-  s.lastDamage=null;
-
-  document.getElementById('damageSummary').innerHTML='';
-  render();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-let dc=0;
-
-function addDamageComponent(){
-  const id=dc++;
-  const el=document.createElement('div');
-  el.className='damage-row';
-  el.id='dc'+id;
-  el.innerHTML=`
-    <div>
-      <label>Amount</label>
-      <input class="da" type="number" min="0">
-    </div>
-    <div>
-      <label>Type</label>
-      <select class="dt">
-        ${damageTypes.map(x=>`<option>${x}</option>`).join('')}
-      </select>
-    </div>
-    <button class="ghost" onclick="document.getElementById('dc${id}').remove()">✕</button>
-  `;
-  document.getElementById('damageComponents').appendChild(el);
-}
-
-function applyIncomingDamage(){
-  const rows=[...document.querySelectorAll('.damage-row')];
-  const c=rows.map(r=>({
-    amount:+r.querySelector('.da').value||0,
-    type:r.querySelector('.dt').value
-  })).filter(x=>x.amount>0);
-
-  if(!c.length)return;
-
-  const old=s.hp;
-  const res=c.map(x=>({
-    ...x,
-    resisted:s.rage&&BPS.includes(x.type),
-    taken:s.rage&&BPS.includes(x.type)?Math.floor(x.amount/2):x.amount
-  }));
-
-  const total=res.reduce((a,x)=>a+x.taken,0);
-  s.hp=Math.max(0,s.hp-total);
-  if(total>0)s.damaged=true;
-  s.lastDamage={old,total};
-
-  document.getElementById('damageSummary').innerHTML=`
-    <div class="rollbox">
-      ${res.map(x=>`
-        <div class="summary-line">
-          <span>${x.amount} ${x.type}</span>
-          <span>${x.resisted?'½ → ':'→ '}<b>${x.taken}</b></span>
-        </div>
-      `).join('')}
-      <div class="summary-line"><b>Total</b><b>${total}</b></div>
-      <div class="summary-line"><span>HP</span><span>${old} → <b>${s.hp}</b></span></div>
-    </div>
-  `;
-
-  document.getElementById('damageComponents').innerHTML='';
-  addDamageComponent();
-  render();
-}
-
-function undoDamage(){
-  if(!s.lastDamage)return;
-  s.hp=s.lastDamage.old;
-  s.lastDamage=null;
-  document.getElementById('damageSummary').innerHTML='';
-  render();
-}
-
-addDamageComponent();
-render();
 </script>
 </body>
 </html>
