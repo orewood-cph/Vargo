@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111315">
-<title>Vargo Combat Assistant V20.4 — GWM-knap</title>
+<title>Vargo Combat Assistant V20.5 — STR og Shadow</title>
 <style>
 
 :root{--bg:#111315;--panel:#1a1e21;--panel2:#23292e;--line:#394147;--text:#f4f1e8;--muted:#aeb6bb;--accent:#d76543;--good:#4b9b68;--warn:#d5a33c;--bad:#bd4b4b;--blue:#4f7fa7}
@@ -91,6 +91,15 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
 @media(min-width:560px){.bottomin button{font-size:.86rem}.attack .weapon-row{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){.bottomin button{font-size:.71rem}.statusbar h1{font-size:1.15rem}.attack .roll{font-size:1.02rem}}
 
+/* V20.5: kompakt styrketracker, uden redesign af angrebskort */
+.strline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:11px 0 2px;padding:9px;background:#1c252b;border:1px solid #455058;border-radius:10px}
+.strline b{white-space:nowrap}
+.strline input{width:68px!important;max-width:68px;text-align:center}
+.strline button{min-height:37px;padding:7px 9px;font-size:.81rem}
+.strline .small{flex-basis:100%;font-size:.76rem}
+#strTop.drained{color:#e4a465;font-weight:750}
+#strTop.fatal{color:#f87171;font-weight:850}
+#checkResult,#saveResult{line-height:1.5}
 </style>
 </head>
 <body>
@@ -99,7 +108,7 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
   <div class="row spread"><h1>VARGO <span class="small">• Barbarian 6</span></h1><span class="small">D&D 2014</span></div>
   <div class="roundline small" id="roundTop">Uden for combat</div>
   <div class="statusrow"><div class="stat"><span class="small">Initiativ</span><b id="initTop">—</b></div><div class="stat"><span class="small">Rage</span><b id="rageTop">OFF</b></div><div class="stat"><span class="small">Uses</span><b id="rageUsesTop">4/4</b></div><div class="stat"><span class="small">AC</span><b>15</b></div><div class="stat"><span class="small">HP</span><b id="hpTop">72/74</b><div class="hpmini"><div id="hpBar" class="hpfill"></div></div></div></div>
-  <div class="hero-meta"><span id="hdTop">Hit Dice 6/6</span><span id="chainsTop">Chains 1/1</span><span>Speed 40 ft.</span></div>
+  <div class="hero-meta"><span id="hdTop">Hit Dice 6/6</span><span id="chainsTop">Chains 1/1</span><span id="strTop">STR 16 (+3)</span><span>Speed 40 ft.</span></div>
 </div></header>
 <div id="eventRow"><div id="log" class="small">Klar.</div><button class="ghost" id="undo" onclick="undo()">↶ FORTRYD</button></div>
 <section class="card" id="combatPanel" style="display:none">
@@ -110,6 +119,13 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
   </div>
   <div class="stephead"><h2><span class="stepnum">2</span>START TUR</h2></div>
   <div class="choice2"><button id="rageBtn" onclick="rageToggle()">START RAGE</button><button id="recklessBtn" onclick="recklessToggle()">RECKLESS OFF</button></div>
+  <div class="strline">
+    <b id="strNow">STR 16 (+3)</b>
+    <label class="inline" style="margin:0">Shadow −<input id="shadowRoll" type="number" min="1" max="4" step="1" inputmode="numeric" placeholder="d4" aria-label="Shadows 1d4 Strength Drain"></label>
+    <button type="button" class="warn" onclick="applyShadowDrain()">TRÆK FRA</button>
+    <button type="button" class="ghost" onclick="correctStrength()">RET STR</button>
+    <span class="small" id="strHelp">Ved et hit: indtast Shadows d4, så STR-score og alle STR-bonusser opdateres.</span>
+  </div>
   <div id="phase" class="small"></div>
   <div class="row toolset"><label class="inline"><input id="bless" type="checkbox" onchange="setFlags('bless',this.checked)"> Bless +1d4</label><label class="inline"><input id="adv" type="checkbox" onchange="setFlags('extAdv',this.checked)"> Advantage</label><label class="inline"><input id="dis" type="checkbox" onchange="setFlags('extDis',this.checked)"> Disadvantage</label></div>
   <details id="combatAdvanced"><summary>Andre handlinger og movement (valgfrit)</summary>
@@ -136,10 +152,27 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
 </section>
 <details open><summary>HP & DAMAGE</summary><div id="hpDetail" class="effect">72/74</div><div id="defense"></div></details>
 <details><summary>MÅL & CONDITIONS</summary><div id="targets"></div><hr><div class="grid"><label>Hvem<select id="who"></select></label><label>Condition<select id="cond"></select></label><label>Kilde / varighed<input id="condSource" placeholder="fx Ghoul / 1 minut"></label><div><label>&nbsp;</label><button onclick="addCondition()">TILFØJ</button></div></div><div id="conditionsOut"></div><div class="row"><label>Exhaustion (0–6)<input id="exhaustion" type="number" min="0" max="6" value="0" onchange="setExhaustion(this.value)"></label></div><div id="conditionHelp"></div></details>
-<details><summary>SAVING THROWS</summary><div class="grid"><label>Ability<select id="saveStat" onchange="saveCalc()"><option>STR</option><option>DEX</option><option>CON</option><option>INT</option><option>WIS</option><option>CHA</option></select></label><label class="inline"><input id="saveVisible" type="checkbox" onchange="saveCalc()"> Kan se effekten (Danger Sense)</label></div><div class="effect" id="saveResult"></div></details>
+  <details><summary>ABILITY CHECKS & SAVING THROWS</summary>
+    <div class="explain">Shadow reducerer <b>STR-score</b>, ikke automatisk dit d20-slag med disadvantage. Her kan du vælge disadvantage særskilt, hvis en condition, en spell eller DM giver det.</div>
+    <h2 style="margin-top:10px">ABILITY CHECK</h2>
+    <div class="grid"><label>Check<select id="checkType" onchange="checkCalc()">
+      <option value="STR">STR check</option><option value="Athletics">Athletics (STR, proficient)</option>
+      <option value="DEX">DEX check</option><option value="Stealth">Stealth (DEX, proficient)</option>
+      <option value="CON">CON check</option><option value="INT">INT check</option>
+      <option value="WIS">WIS check</option><option value="Perception">Perception (WIS, proficient)</option>
+      <option value="CHA">CHA check</option><option value="Intimidation">Intimidation (CHA, proficient)</option>
+    </select></label></div>
+    <div class="row"><label class="inline"><input type="checkbox" id="checkAdv" onchange="setFlags('checkAdv',this.checked)"> Ekstra Advantage</label><label class="inline"><input type="checkbox" id="checkDis" onchange="setFlags('checkDis',this.checked)"> Ekstra Disadvantage</label></div>
+    <div class="effect" id="checkResult"></div>
+    <hr><h2>SAVING THROW</h2>
+    <div class="grid"><label>Ability<select id="saveStat" onchange="saveCalc()"><option>STR</option><option>DEX</option><option>CON</option><option>INT</option><option>WIS</option><option>CHA</option></select></label><label class="inline"><input id="saveVisible" type="checkbox" onchange="saveCalc()"> Kan se effekten (Danger Sense)</label></div>
+    <div class="row"><label class="inline"><input id="saveAdv" type="checkbox" onchange="setFlags('saveAdv',this.checked)"> Ekstra Advantage</label><label class="inline"><input id="saveDis" type="checkbox" onchange="setFlags('saveDis',this.checked)"> Ekstra Disadvantage</label></div>
+    <div class="effect" id="saveResult"></div>
+    <p class="small">Disadvantage og Advantage på samme rul ophæver hinanden. Rage giver Advantage på STR checks og STR saves. Poisoned og Exhaustion kan påvirke checks uafhængigt af STR-score.</p>
+  </details>
 <details><summary>INVENTORY & POTION</summary><div id="inventory"></div></details>
 <details id="restPanel"><summary>SHORT REST / LONG REST</summary><div id="restControls"></div></details>
-<details id="settingsPanelDetails"><summary>KARAKTERDATA & MANUEL KORREKTION</summary><div id="settingsPanel"></div><div class="small">STR 16 (+3), DEX 14 (+2), CON 16 (+3), PB +3. AC 15, max HP 74. Bugbear Surprise Attack fra Volo (én gang pr. combat).</div></details>
+<details id="settingsPanelDetails"><summary>KARAKTERDATA & MANUEL KORREKTION</summary><div id="settingsPanel"></div><div class="small">Normal STR 16 (+3), DEX 14 (+2), CON 16 (+3), PB +3. Aktuel STR vises øverst. AC 15, max HP 74. Bugbear Surprise Attack fra Volo (én gang pr. combat).</div></details>
 </div>
 <footer class="bottom"><div class="bottomin" id="combatButtons"><button class="good" onclick="newCombat()">NEW COMBAT</button></div></footer>
 
@@ -153,10 +186,12 @@ const CONDS=['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitat
 const W={gs:{n:'Greatsword',mode:'melee',stat:'STR',dice:'2d6',type:'Slashing',heavy:1,two:1},hm:{n:'Handaxe',mode:'melee',stat:'STR',dice:'1d6',type:'Slashing',light:1},ht:{n:'Handaxe kast',mode:'thrown',stat:'STR',dice:'1d6',type:'Slashing',range:[20,60]},jm:{n:'Javelin',mode:'melee',stat:'STR',dice:'1d6',type:'Piercing'},jt:{n:'Javelin kast',mode:'thrown',stat:'STR',dice:'1d6',type:'Piercing',range:[30,120]},ds:{n:'Dagger STR',mode:'melee',stat:'STR',dice:'1d4',type:'Piercing',light:1},dd:{n:'Dagger DEX',mode:'melee',stat:'DEX',dice:'1d4',type:'Piercing',light:1},dts:{n:'Dagger kast STR',mode:'thrown',stat:'STR',dice:'1d4',type:'Piercing',range:[20,60]},dtd:{n:'Dagger kast DEX',mode:'thrown',stat:'DEX',dice:'1d4',type:'Piercing',range:[20,60]},ua:{n:'Unarmed Strike',mode:'unarmed',stat:'STR',dice:null,type:'Bludgeoning'}};
 const el=id=>document.getElementById(id);
 const hpCap=()=>s.exhaustion>=4?Math.floor(HP/2):HP;
+const strMod=()=>Math.floor((s.str-10)/2);
+const signed=n=>(n>=0?'+':'')+n;
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nval=(x,d=0)=>Number.isFinite(Number(x))?Number(x):d;
 const aNew=(k='gs')=>({k,id:'t1',dist:5,cover:0,visible:true,enemyNear:false,gwm:false,result:'',kill:false,surprise:false,extra:[]});
-const fresh=()=>({version:19,hp:72,temp:0,rages:4,hitDice:6,chains:1,attuned:false,potions:1,gear:{gs:1,hm:1,jm:4,ds:1},gold:15,
+const fresh=()=>({version:19,hp:72,temp:0,str:16,shadowDrain:0,checkAdv:false,checkDis:false,saveAdv:false,saveDis:false,rages:4,hitDice:6,chains:1,attuned:false,potions:1,gear:{gs:1,hm:1,jm:4,ds:1},gold:15,
   combat:false,round:1,phase:'idle',initiative:null,turnNumber:0,rage:false,rageTurns:0,reckless:false,recklessDefense:false,
   action:'',bonus:'',reaction:'',attacks:[aNew(),aNew()],bonusAttack:null,hands:'greatsword',interaction:false,moveUsed:0,
   attacked:false,damaged:false,surpriseUsed:false,ap:null,chainsDebuff:null,bless:false,blessCaster:'',extAdv:false,extDis:false,fearVisible:false,resting:false,
@@ -165,6 +200,10 @@ const fresh=()=>({version:19,hp:72,temp:0,rages:4,hitDice:6,chains:1,attuned:fal
 let s;
 try{s=JSON.parse(localStorage.getItem(SAVE));}catch(e){}
 if(!s||s.version!==19){let old;try{old=JSON.parse(localStorage.getItem('vargoV8'));}catch(e){}s=fresh();if(old){for(const k of ['hp','rages','hitDice'])if(Number.isFinite(old[k]))s[k]=Math.max(0,Math.min(k==='hp'?HP:k==='rages'?MAX_RAGE:MAX_DICE,old[k]));if(old.chainsReady===false)s.chains=0;s.migrated=true;s.lastInfo='Ældre ressourcer indlæst. Bekræft aktuelle HP, Rages, Hit Dice og attunement.';}}
+// V20.5 bruger den samme gemte status som V20.4; ingen nulstilling af HP, Rage eller Chains.
+if(!Number.isInteger(s.str)||s.str<0||s.str>30)s.str=16;
+if(!Number.isInteger(s.shadowDrain)||s.shadowDrain<0)s.shadowDrain=0;
+for(const k of ['checkAdv','checkDis','saveAdv','saveDis'])if(typeof s[k]!=='boolean')s[k]=false;
 let history=[];
 function save(){try{localStorage.setItem(SAVE,JSON.stringify(s));}catch(e){}}
 function commit(fn){history.push(JSON.stringify(s));if(history.length>35)history.shift();const result=fn();render();return result;}
@@ -201,22 +240,24 @@ function mods(a){const w=W[a.k],t=target(a.id),adv=[],dis=[],notes=[];
   return {adv,dis,notes,kind};
 }
 function dice(a,crit=false){const w=W[a.k],rage=s.rage&&w.stat==='STR'&&(w.mode==='melee'||w.mode==='unarmed'),gwm=a.gwm&&w.heavy&&w.mode==='melee';
-  const base=a.offhand?0:(w.stat==='STR'?3:2);const flat=(w.mode==='unarmed'?1+base:base)+(rage?2:0)+(gwm?10:0);
+  const base=a.offhand?0:(w.stat==='STR'?strMod():2);const flat=(w.mode==='unarmed'?1+base:base)+(rage?2:0)+(gwm?10:0);
   const extra=a.surprise?(crit?'4d6':'2d6'):null;
   const weaponDie=w.dice?(crit?(parseInt(w.dice)*2)+w.dice.replace(/^[0-9]+/,''):w.dice):'';
   const main=`${weaponDie}${extra?(weaponDie?' + ':'')+extra:''}${(weaponDie||extra)?' + ':''}${flat} ${w.type.toLowerCase()}${magical(a)?' (magical)':''}`;
   return [main,...(a.extra||[]).map(e=>{const m=/^(\d+)d(\d+)(?:\+(\d+))?$/.exec(e.formula);return (m?(Number(m[1])*(crit?2:1))+'d'+m[2]+(m[3]?'+'+m[3]:''):e.formula)+' '+e.type.toLowerCase()+' ('+e.source+')';})].join(' + ');
 }
-function hitBonus(a){return (W[a.k].stat==='STR'?6:5)-(a.gwm&&W[a.k].heavy&&W[a.k].mode==='melee'?5:0);}
+function hitBonus(a){return (W[a.k].stat==='STR'?strMod()+3:5)-(a.gwm&&W[a.k].heavy&&W[a.k].mode==='melee'?5:0);}
 function showStatus(){const hp=Math.max(0,Math.min(100,s.hp/hpCap()*100));el('hpBar').style.width=hp+'%';el('hpBar').style.background=hp<=25?'#d05d5d':hp<=50?'#e2ab47':'#53a678';
   el('hpTop').textContent=`${s.hp}/${hpCap()}`;el('hpDetail').textContent=`${s.hp}/${hpCap()} • Temp ${s.temp}`;el('rageTop').textContent=s.rage?'ON':'OFF';el('rageUsesTop').textContent=`${s.rages}/${MAX_RAGE}`;
   el('initTop').textContent=s.initiative??'—';el('roundTop').textContent=s.combat?`Runde ${s.round} • ${s.phase==='self'?'Vargos tur':'Andres ture'}`:'Uden for combat';
+  el('strTop').textContent=`STR ${s.str} (${signed(strMod())})${s.shadowDrain?' • Shadow −'+s.shadowDrain:''}`;
+  el('strTop').className=s.str===0?'fatal':s.str<16?'drained':'';
   el('hdTop').textContent=`Hit Dice ${s.hitDice}/${MAX_DICE}`;el('chainsTop').textContent=`Chains ${s.chains}/1 pr. combat${s.attuned?' • Attuned':' • Attunement mangler'}`;
   el('log').textContent=s.lastInfo;el('undo').disabled=history.length===0;if(el('exhaustion'))el('exhaustion').value=s.exhaustion;
   el('combatButtons').innerHTML=s.combat?`<button onclick="endOwnTurn()" ${s.phase==='self'?'':'disabled'}>AFSLUT TUR</button><button class="good" onclick="startOwnTurn()" ${s.phase==='others'?'':'disabled'}>NÆSTE TUR</button><button class="bad" onclick="endCombat()">END COMBAT</button>`:'<button class="good" onclick="newCombat()">NEW COMBAT</button><button onclick="openRest()">SHORT REST</button><button onclick="longRest()">LONG REST</button>';
   el('combatPanel').style.display=s.combat?'block':'none';
   el('initiativeBlock').style.display=s.round===1?'block':'none';
-  el('settingsPanel').innerHTML=`<div class="grid"><label>Aktuel HP<input type="number" min="0" max="${hpCap()}" value="${s.hp}" onchange="setNum('hp',this.value,74)"></label><label>Temp HP<input type="number" min="0" value="${s.temp}" onchange="setNum('temp',this.value,999)"></label><label>Rages tilbage<input type="number" min="0" max="4" value="${s.rages}" onchange="setNum('rages',this.value,4)"></label><label>Hit Dice tilbage<input type="number" min="0" max="6" value="${s.hitDice}" onchange="setNum('hitDice',this.value,6)"></label></div><label class="inline"><input type="checkbox" ${s.attuned?'checked':''} onchange="commit(()=>{s.attuned=this.checked;msg('Attunement opdateret')})"> Chains attuned (Barbarian)</label><label>Bless caster (ved aktiv Bless)<input value="${safe(s.blessCaster)}" placeholder="fx Cleric" onchange="setFlags('blessCaster',this.value)"></label><p class="small">${s.migrated?'Importerede gemte værdier fra den tidligere app. Tjek tallene.':'74 max HP; Shard viste 72 HP den 18/10. Ret efter næste spil.'}</p>`;
+  el('settingsPanel').innerHTML=`<div class="grid"><label>Aktuel HP<input type="number" min="0" max="${hpCap()}" value="${s.hp}" onchange="setNum('hp',this.value,74)"></label><label>Temp HP<input type="number" min="0" value="${s.temp}" onchange="setNum('temp',this.value,999)"></label><label>Rages tilbage<input type="number" min="0" max="4" value="${s.rages}" onchange="setNum('rages',this.value,4)"></label><label>Hit Dice tilbage<input type="number" min="0" max="6" value="${s.hitDice}" onchange="setNum('hitDice',this.value,6)"></label></div><label class="inline"><input type="checkbox" ${s.attuned?'checked':''} onchange="commit(()=>{s.attuned=this.checked;msg('Attunement opdateret')})"> Chains attuned (Barbarian)</label><label>Aktuel STR (manuel korrektion)<input type="number" min="0" max="30" value="${s.str}" onchange="setStrength(this.value)"></label><label>Bless caster (ved aktiv Bless)<input value="${safe(s.blessCaster)}" placeholder="fx Cleric" onchange="setFlags('blessCaster',this.value)"></label><p class="small">${s.migrated?'Importerede gemte værdier fra den tidligere app. Tjek tallene.':'74 max HP; Shard viste 72 HP den 18/10. Ret efter næste spil.'}</p>`;
 }
 function optionList(arr,chosen){return arr.map(([k,v])=>`<option value="${safe(k)}" ${String(k)===String(chosen)?'selected':''}>${safe(v)}</option>`).join('');}
 function renderTargets(){el('targets').innerHTML=s.targets.map(t=>`<div class="mini"><div class="row"><b>${safe(t.name)}</b><span class="small">${t.ac!==''?'AC '+safe(t.ac):'AC ukendt'}</span><button class="ghost" onclick="editTarget('${t.id}')">Rediger</button></div><div class="small">${t.surprised?'Surprised • ':''}${t.dodging?'Dodge • ':''}${t.conditions.map(x=>x.name).join(', ')||'Ingen conditions'}</div></div>`).join('')+`<button onclick="addTarget()">+ Nyt mål</button>`;
@@ -232,6 +273,10 @@ function renderCombat(){
   el('phase').textContent=`Action: ${s.action||'Ledig'} • Bonus: ${s.bonus||'Ledig'} • Reaction: ${s.reaction||'Ledig'} • Movement ${s.moveUsed}/${movement()} ft.`+(incap()?' • UDE AF STAND TIL AT HANDLE (incapacitated / 0 HP)':'');
   el('bless').checked=s.bless;el('adv').checked=s.extAdv;el('dis').checked=s.extDis;el('fearVisible').checked=s.fearVisible;
   el('move').value=s.moveUsed;
+  el('strNow').textContent=`STR ${s.str} (${signed(strMod())})`;
+  el('strHelp').textContent=s.str===0?'STR 0: Vargo dør af Strength Drain. Brug FORTRYD hvis slaget blev registreret forkert.':
+    s.shadowDrain?`Shadow Drain: −${s.shadowDrain} STR registreret. Gendannes ved Short/Long Rest. Gav ikke automatisk disadvantage.`:
+    'Shadow-hit: indtast d4 (1–4) og tryk TRÆK FRA. Ved fejl: RET STR eller FORTRYD.';
   el('initiative').value=s.initiative===null?'':s.initiative-2;
   el('actionSelect').value=s.action && s.action!=='Attack' ? s.action : '';
   const expanded=[0,1,2].map(i=>el('attackAdvanced'+i)?.open||false);el('attackCards').innerHTML=s.attacks.map((a,i)=>card(a,i)).join('')+(s.bonusAttack?card(s.bonusAttack,2):'');expanded.forEach((opened,i)=>{const panel=el('attackAdvanced'+i);if(panel&&opened)panel.open=true;});
@@ -277,6 +322,7 @@ function renderInventory(){el('inventory').innerHTML=`<div class="grid">${[['gs'
 }
 function render(){const previousDamageRows=[...document.querySelectorAll('#damageRows .damage-row')].map(x=>({amount:x.querySelector('.damount')?.value||'',source:x.querySelector('.dsource')?.value||'',type:x.querySelector('.dtype')?.value||'Bludgeoning',magic:!!x.querySelector('.dmagic')?.checked,mod:x.querySelector('.dmod')?.value||'auto'}));showStatus();renderTargets();renderCombat();renderInventory();el('restControls').innerHTML=`<button class="good" onclick="shortRest()" ${s.combat?'disabled':''}>TAG SHORT REST</button><button onclick="longRest()" ${s.combat?'disabled':''}>TAG LONG REST</button><div class="row"><label>Hit Die (1d12)<input id="die" type="number" min="1" max="12" placeholder="1–12"></label><button onclick="spendDie()" ${s.combat||s.hitDice===0?'disabled':''}>Brug Hit Die (+3 CON)</button></div><p class="small">Long Rest gendanner maks. HP og Rages samt op til 3 brugte Hit Dice (2014). Chains kan bruges én gang pr. combat og bliver først klar ved NEW COMBAT. Short Rest genoplader ikke Chains, Rages eller HP automatisk.</p>`;
   el('defense').innerHTML=`<div class="row"><label>Incoming damage components: beløb og type (og evt. beskyttelse).<span class="small"> Rage giver resistance også mod magical B/P/S.</span></label></div><div id="damageRows"></div><button onclick="damageRow()">+ Damage component</button><button class="bad" onclick="takeDamage()">TAKE DAMAGE</button><hr><div class="row"><label>Heal HP<input id="heal" type="number" min="1"></label><button class="good" onclick="healNow()">HEAL</button></div><div class="row"><button onclick="deathSave('success')" ${s.hp>0||s.deaths.dead?'disabled':''}>Death save success</button><button onclick="deathSave('failure')" ${s.hp>0||s.deaths.dead?'disabled':''}>Death save fail</button><button onclick="deathSave('nat20')" ${s.hp>0||s.deaths.dead?'disabled':''}>Natural 20</button><button onclick="deathSave('nat1')" ${s.hp>0||s.deaths.dead?'disabled':''}>Natural 1</button><button onclick="stabilize()" ${s.hp>0?'disabled':''}>Stabilize</button></div><p class="small">Death saves: ${s.deaths.success}/3 succes • ${s.deaths.fail}/3 failures • ${s.deaths.dead?'DEAD':s.deaths.stable?'STABLE':s.hp===0?'UNCONSCIOUS':'Conscious'}.</p>`;
+  checkCalc();
   if(previousDamageRows.length){el('damageRows').innerHTML='';for(const x of previousDamageRows){damageRow();const r=el('damageRows').lastElementChild;r.querySelector('.damount').value=x.amount;r.querySelector('.dsource').value=x.source;r.querySelector('.dtype').value=x.type;r.querySelector('.dmagic').checked=x.magic;r.querySelector('.dmod').value=x.mod;}}else if(el('damageRows').children.length===0)damageRow();saveCalc();save();
 }
 function setNum(k,v,max){commit(()=>{s[k]=Math.max(0,Math.min(k==='hp'?hpCap():max,Math.trunc(nval(v))));msg(k+' rettet manuelt')});}
@@ -309,7 +355,7 @@ function changeAttack(i,k,v){
 }
 function addExtra(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a)return;const formula=prompt('Ekstra damage formula, fx 1d6 eller 2d6+2','1d6');if(formula===null)return;const clean=formula.replace(/\s+/g,'');if(!/^(\d+d\d+(?:\+\d+)?|\d+)$/.test(clean))return alert('Brug fx 1d6, 2d6+2 eller 5');const type=prompt('Damage type (fx Fire eller Necrotic)','Fire');if(!type)return;const source=prompt('Kilde / ability (fx spell eller item)','Ekstern')||'Ekstern';commit(()=>{a.extra=a.extra||[];a.extra.push({formula:clean,type,source});msg('Ekstra damage føjet til '+W[a.k].n)});}
 function clearExtra(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a)return;commit(()=>{a.extra=[];});}
-function maneuver(i,kind){if(i>1||s.phase!=='self'||incap())return;if(s.action&&s.action!=='Attack')return;const a=s.attacks[i];if(a.result)return;if(i===1&&!s.attacks[0].result)return alert('Registrér attack 1 først.');commit(()=>{s.action='Attack';a.result=kind;a.kill=false;s.attacked=true;msg(kind+' bruger én af to angreb fra Attack action. Contested Athletics +6 mod target Athletics/Acrobatics. DM afgør udfaldet.');});}
+function maneuver(i,kind){if(i>1||s.phase!=='self'||incap())return;if(s.action&&s.action!=='Attack')return;const a=s.attacks[i];if(a.result)return;if(i===1&&!s.attacks[0].result)return alert('Registrér attack 1 først.');commit(()=>{s.action='Attack';a.result=kind;a.kill=false;s.attacked=true;msg(kind+' bruger ét af de to angreb. Contested Athletics '+signed(strMod()+3)+' mod target Athletics/Acrobatics. Rage: advantage på STR checks. DM afgør udfaldet.');});}
 function recordAttack(i,result){const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result||s.phase!=='self'||incap())return;
   const w=W[a.k];if(!weaponOkay(w)||avail(a.k)<=0||!distOk(a)||a.cover===3)return;
   if(s.conditions.some(x=>x.name==='Charmed'&&x.source.toLowerCase()===target(a.id).name.toLowerCase()))return alert('Charmed: du kan ikke angribe den creature, der charmede dig.');
@@ -355,9 +401,9 @@ function activateChains(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!s.rage||
 function spiritShield(){if(!s.combat||!s.rage||s.reaction||incap())return;const name=prompt('Hvem (en anden creature end Vargo) beskyttes? Navn:');if(!name||name.trim().toLowerCase()==='vargo')return;const dist=Number(prompt('Afstand til væsnet (ft.)?','30'));if(!Number.isFinite(dist)||dist>30||dist<0)return alert('Målet skal være inden for 30 ft.');if(!confirm('Kan Vargo se væsnet, og tager det damage netop nu?'))return;const roll=prompt('2d6 reduktion — indtast terningresultat (2–12) eller lad stå tomt for manuel rul:','');if(roll!==null&&roll!==''&&(!Number.isInteger(Number(roll))||Number(roll)<2||Number(roll)>12))return alert('2d6 skal være 2–12.');commit(()=>{s.reaction='Spirit Shield';msg(`Spirit Shield på ${name}: reducerer skaden med ${roll||'2d6 (rul ved bordet)'}. Reaction brugt.`);});}
 function opportunity(){if(!s.combat||s.phase!=='others'||s.reaction||incap())return;const weapon=prompt('Opportunity Attack våben: gs, hm, jm, ds, dd eller ua','gs');if(!W[weapon]||W[weapon].mode==='thrown')return alert('Vælg et melee attack (gs/hm/jm/ds/dd/ua).');if(!confirm('Forlader en synlig creature din reach? (Normalt 5 ft. på andres tur.)'))return;commit(()=>{s.reaction='Opportunity Attack';const aa=aNew(weapon);msg(`Opportunity Attack: 1d20+${hitBonus(aa)}; damage ${dice(aa)}. Reaction brugt. Reckless gælder ikke på andres tur.`);});}
 function openRest(){el('restPanel').open=true;el('restPanel').scrollIntoView({behavior:'smooth',block:'center'});}
-function shortRest(){if(s.combat)return;commit(()=>{s.resting=true;msg('Short Rest: Chains ændres ikke (1/combat). Brug Hit Dice-healing separat. Rages er uændrede.');});}
+function shortRest(){if(s.combat)return;if(s.deaths.dead)return alert('Vargo er død og kan ikke hvile. Ret en fejlagtig registrering med FORTRYD.');commit(()=>{s.resting=true;const recovered=restoreShadowDrain();msg('Short Rest: '+(recovered?'Shadow Strength Drain gendannet. ':'')+'Chains ændres ikke (1/combat). Brug Hit Dice-healing separat. Rages er uændrede.');});}
 function spendDie(){if(s.combat||!s.resting||s.hitDice<1)return alert('Tag først en Short Rest for at bruge Hit Dice.');const d=Number(el('die')?.value);if(!Number.isInteger(d)||d<1||d>12)return alert('Indtast et faktisk d12-resultat fra 1 til 12.');commit(()=>{s.hitDice--;const old=s.hp;s.hp=Math.min(hpCap(),s.hp+d+3);msg(`Hit Die: ${d}+3 CON; HP ${old} → ${s.hp}. Hit Dice ${s.hitDice}/${MAX_DICE}`);});}
-function longRest(){if(s.combat)return;commit(()=>{s.hp=hpCap();s.temp=0;s.rages=MAX_RAGE;s.hitDice=Math.min(MAX_DICE,s.hitDice+3);s.rage=false;s.resting=false;s.deaths={success:0,fail:0,stable:false,dead:false};msg('Long Rest: fuld HP, 4 Rages, +3 Hit Dice (maks. 6). Chains ændres ikke (1/combat). Potions/kastede våben er ikke gendannet.');});}
+function longRest(){if(s.combat)return;if(s.deaths.dead)return alert('Vargo er død og kan ikke hvile. Ret en fejlagtig registrering med FORTRYD.');commit(()=>{const recovered=restoreShadowDrain();s.hp=hpCap();s.temp=0;s.rages=MAX_RAGE;s.hitDice=Math.min(MAX_DICE,s.hitDice+3);s.rage=false;s.resting=false;s.deaths={success:0,fail:0,stable:false,dead:false};msg('Long Rest: '+(recovered?'Shadow Strength Drain gendannet. ':'')+'Fuld HP, 4 Rages, +3 Hit Dice (maks. 6). Chains ændres ikke (1/combat). Potions/kastede våben er ikke gendannet.');});}
 function drinkPotion(){if(s.potions<1||s.hp>=hpCap())return;if(s.combat&&s.phase!=='self')return alert('Potion kan kun drikkes på Vargos tur.');if(s.combat&&s.action&&s.action!=='Potion')return alert('Action er allerede brugt.');const x=Number(prompt('Rul 2d4+2 og indtast TOTAL (4–10):'));if(!Number.isInteger(x)||x<4||x>10)return;commit(()=>{if(s.combat)s.action='Potion';s.potions--;const before=s.hp;s.hp=Math.min(hpCap(),s.hp+x);s.deaths={success:0,fail:0,stable:false,dead:false};msg(`Potion 2d4+2 = ${x}; HP ${before} → ${s.hp}; ${s.potions} tilbage. 2014 Action brugt.`);});}
 function healNow(){const v=Number(el('heal')?.value);if(!Number.isFinite(v)||v<=0)return;commit(()=>{const old=s.hp;s.hp=Math.min(hpCap(),s.hp+Math.trunc(v));if(old===0&&s.hp>0)s.deaths={success:0,fail:0,stable:false,dead:false};msg(`Healing: ${old} → ${s.hp}.`);});}
 function damageRow(){const x=document.createElement('div');x.className='damage-row';x.innerHTML=`<input class="damount" type="number" min="0" placeholder="Damage"><input class="dsource" type="text" placeholder="Kilde"><select class="dtype">${TYPES.map(x=>`<option>${x}</option>`).join('')}</select><label class="inline"><input type="checkbox" class="dmagic"> magical</label><select class="dmod"><option value="auto">Auto / Rage</option><option value="resist">Resistance</option><option value="immune">Immunity</option><option value="vuln">Vulnerability</option><option value="both">Resist + vulnerable</option><option value="normal">Ingen beskyttelse</option></select><button class="ghost" onclick="this.parentElement.remove()">✕</button>`;el('damageRows').appendChild(x);}
@@ -377,13 +423,61 @@ function setExhaustion(v){commit(()=>{s.exhaustion=Math.min(6,Math.max(0,Math.tr
 function setMove(v){commit(()=>{s.moveUsed=Math.max(0,nval(v));});}
 function setFlags(k,v){commit(()=>{s[k]=v;});}
 function applyAction(){const v=el('actionSelect').value;if(!v)return;if(v==='Grapple'||v==='Shove'){const i=s.attacks[0].result?1:0;return maneuver(i,v);}turnAction(v);}
-function saveCalc(){const key=el('saveStat').value,base={STR:6,DEX:2,CON:6,INT:-1,WIS:1,CHA:-1}[key];let adv=[],dis=[];
+// Shadow (2014): Reducerer selve Strength-score med 1d4 pr. træffende attack.
+function applyShadowDrain(){
+ const value=el('shadowRoll').value,die=Number(value);
+ if(!Number.isInteger(die)||die<1||die>4)return alert('Indtast Shadows faktiske 1d4-resultat (1–4) efter et hit.');
+ if(s.deaths.dead)return alert('Vargo er allerede registreret som død.');
+ commit(()=>{const old=s.str,loss=Math.min(old,die);s.str=Math.max(0,old-die);s.shadowDrain+=loss;
+   if(s.str===0){s.deaths.dead=true;msg(`Shadow Strength Drain: STR ${old} → 0. Vargo dør ved STR 0. Brug FORTRYD ved fejl.`);}
+   else msg(`Shadow Strength Drain: STR ${old} → ${s.str} (${signed(strMod())}). STR attacks, damage, Athletics og saves opdateret. Ingen automatisk disadvantage.`);
+ });
+ el('shadowRoll').value='';
+}
+function setStrength(value){
+ const v=Number(value);
+ if(!Number.isInteger(v)||v<0||v>30)return alert('Indtast aktuel STR fra 0 til 30.');
+ commit(()=>{s.str=v;s.shadowDrain=0; // Manuel korrektion erstatter tracking; ingen gættet rest-effekt.
+   if(v===0)s.deaths.dead=true;
+   msg('Aktuel STR sat manuelt til '+v+'. Shadow-drain-tracking er nulstillet. Næste hvile ændrer ikke manuel STR-korrektion.');
+ });
+}
+function correctStrength(){
+ const reply=prompt('Aktuel STR (normal 16). Dette er manuel korrektion, ikke et Shadow-hit:',String(s.str));
+ if(reply===null)return;setStrength(reply);
+}
+function restoreShadowDrain(){
+ if(!s.shadowDrain)return false;
+ s.str=Math.min(16,s.str+s.shadowDrain);s.shadowDrain=0;return true;
+}
+function rollDisplay(adv,dis){return adv.length&&dis.length?'1d20 (Adv/Dis ophævet)':adv.length?'2d20 high':dis.length?'2d20 low':'1d20';}
+function checkCalc(){
+ if(!el('checkResult'))return;
+ const key=el('checkType').value;
+ const stat={Athletics:'STR',Stealth:'DEX',Perception:'WIS',Intimidation:'CHA'}[key]||key;
+ const mods={STR:strMod(),DEX:2,CON:3,INT:-1,WIS:1,CHA:-1};
+ const proficient=['Athletics','Stealth','Perception','Intimidation'].includes(key);
+ const base=mods[stat]+(proficient?3:0),adv=[],dis=[];
+ if(stat==='STR'&&s.rage)adv.push('Rage (STR check)');
+ if(s.checkAdv)adv.push('Ekstern advantage');
+ if(s.checkDis)dis.push('Ekstern disadvantage');
+ if(meCond('Poisoned'))dis.push('Poisoned');
+ if(meCond('Frightened')&&s.fearVisible)dis.push('Frightened (synlig kilde)');
+ if(s.exhaustion>=1)dis.push('Exhaustion 1+');
+ el('checkAdv').checked=s.checkAdv;el('checkDis').checked=s.checkDis;
+ el('checkResult').textContent=`${key} check: ${rollDisplay(adv,dis)} ${signed(base)} • ${[...adv.map(x=>'ADV: '+x),...dis.map(x=>'DIS: '+x)].join(' / ')||'standard'}`;
+}
+function saveCalc(){
+ if(!el('saveResult'))return;
+ const key=el('saveStat').value,base={STR:strMod()+3,DEX:2,CON:6,INT:-1,WIS:1,CHA:-1}[key];let adv=[],dis=[];
  if(key==='STR'&&s.rage)adv.push('Rage STR saves');
  if(key==='DEX'&&el('saveVisible').checked&&!meCond('Blinded')&&!meCond('Deafened')&&!incap())adv.push('Danger Sense (synlig effekt)');
+ if(s.saveAdv)adv.push('Ekstern advantage');
+ if(s.saveDis)dis.push('Ekstern disadvantage');
  if(key==='DEX'&&meCond('Restrained'))dis.push('Restrained');
  if(s.exhaustion>=3)dis.push('Exhaustion 3+');
- const m=adv.length&&dis.length?'normal (ophævet)':adv.length?'advantage':dis.length?'disadvantage':'normal';
- el('saveResult').textContent=`${key} save: ${m==='advantage'?'2d20 high':m==='disadvantage'?'2d20 low':'1d20'} ${base<0?'':'+'}${base} • ${[...adv,...dis].join(' / ')||'standard'}`;
+ el('saveAdv').checked=s.saveAdv;el('saveDis').checked=s.saveDis;
+ el('saveResult').textContent=`${key} save: ${rollDisplay(adv,dis)} ${signed(base)} • ${[...adv.map(x=>'ADV: '+x),...dis.map(x=>'DIS: '+x)].join(' / ')||'standard'}`;
 }
 function populate(){el('cond').innerHTML=optionList(CONDS.map(x=>[x,x]),'Blinded');el('who').innerHTML=optionList([['self','Vargo'],...s.targets.map(t=>[t.id,t.name])],'self');}
 // Let individual conditions remain independent by source; derived notes cover non-attack consequences.
