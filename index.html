@@ -354,8 +354,11 @@ function card(a,i){
  ${w.heavy&&w.mode==='melee'?`<div class="row toolset"><button type="button" class="gwm-toggle ${a.gwm?'active':''}" aria-pressed="${a.gwm?'true':'false'}" ${locked?'disabled':''} onclick="changeAttack(${i},'gwm',${a.gwm?'false':'true'})">GWM −5/+10 · ${a.gwm?'ON':'OFF'}</button></div>`:''}
  <div class="rollbox"><div class="rolltitle">TO HIT • ${m.kind.toUpperCase()}</div><div class="roll">${hitType} ${b>=0?'+':''}${b}${s.bless?' +1d4 Bless':''}</div><div class="small">${safe([...m.adv.map(x=>'ADV: '+x),...m.dis.map(x=>'DIS: '+x)].join(' • ')||'Standard attack roll')}</div></div>
  <div class="rollbox"><div class="rolltitle">DAMAGE (NORMAL / CRIT)</div><div class="roll">${dice(a)}<div class="small">CRIT: ${dice(a,true)}</div></div><div class="compact-note">${magical(a)?'Magical via Chains (Rage + attunement)':'Ikke magical fra Chains'}${w.mode==='thrown'?' • Kast: ingen melee-bonus':''}</div></div>
- ${!locked&&!weaponOkay(w,a.k)?`<div class="warnnote">${safe(W[a.k].n)} er ikke i hånden. <button onclick="readyForAttack(${i})" ${locked?'disabled':''}>TRÆK / GØR VÅBEN KLAR</button>${s.interaction?' <span class="small">Fri object interaction er brugt — se forklaring ved tryk.</span>':''}</div>`:''}${avail(a.k)===0?'<div class="warnnote">Våbnet er ikke længere i din beholdning.</div>':''}
- ${locked&&w.mode==='thrown'?`<div class="compact-note">${safe(w.n)} er kastet og trukket fra beholdningen. Vargo har nu ${safe(heldName())} i hånden. Du kan vælge et andet våben på næste angreb og trække det, hvis den frie object interaction er ledig.</div>`:''}
+ ${!locked&&!weaponOkay(w,a.k)?`<div class="warnnote">${safe(W[a.k].n)} er ikke i hånden.
+ ${s.interaction&&s.action!=='Use an Object'
+   ?`<button type="button" class="warn" onclick="readyForAttack(${i},true)">DM GODKENDT — TRÆK VÅBEN</button><div class="small">Den frie object interaction er brugt. Brug kun knappen, hvis DM godkender dette ekstra våbenskift.</div>`
+   :`<button type="button" onclick="readyForAttack(${i})">TRÆK / GØR VÅBEN KLAR</button>`}</div>`:''}${avail(a.k)===0?'<div class="warnnote">Våbnet er ikke længere i din beholdning.</div>':''}
+ ${locked&&w.mode==='thrown'?`<div class="compact-note">${safe(w.n)} er kastet og trukket fra beholdningen. Vargo har nu ${safe(heldName())} i hånden. Vælg et nyt våben på næste angreb; et ekstra træk kræver DM-godkendelse, hvis den frie interaction allerede er brugt.</div>`:''}
  ${m.notes.length?`<div class="warnnote">${safe(m.notes.join(' • '))}</div>`:''}
  ${locked?`<div class="row toolset"><button class="ghost" onclick="correctAttack(${i})">RET / FORTRYD ANGREB</button>${a.surprise?'<span class="tag">Surprise +2d6</span>':''}${ap?'<span class="tag">Ancestral Protectors</span>':''}</div>
  ${canChains?`<div class="row toolset"><button class="warn" ${!s.attuned||!s.rage||!s.chains?'disabled':''} onclick="activateChains(${i})">${!s.attuned?`CHAINS ${s.chains}/1 — ATTUNEMENT MANGLER`:s.chains?`CHAINS 1/1 — BRUG PÅ HIT`:`CHAINS 0/1 — BRUGT DENNE KAMP`}</button></div>${!s.attuned?'<div class="compact-note">1/1 = charge er klar. Gå til ANCESTRAL GUARDIAN & CHAINS og markér, hvis du allerede er attuned.</div>':''}`:''}`:
@@ -391,20 +394,24 @@ function neededHands(w){
 function confirmHands(next){
   if(next===s.hands)return true;
   if(s.interaction&&s.action!=='Use an Object'){
-    alert('Vargos frie object interaction er allerede brugt på denne tur. Et yderligere træk eller våbenskift kræver normalt din Action eller en særregel/DM-afgørelse (2014). På næste tur får du en ny fri interaction.');
-    return false;
+    return confirm('Den frie object interaction er allerede brugt. Har DM godkendt dette ekstra våbenskift på samme tur? OK = DM godkendt. Annuller = behold nuværende våben.');
   }
   return confirm('Bekræft at Vargo gør dette våben klar lovligt. At trække det koster normalt din ene frie object interaction på turen. Hvis et andet våben skal lægges væk, skal du også kunne gøre det lovligt (fx slippe det).');
 }
-function readyForAttack(i){
-  const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result)return;
+function readyForAttack(i,dmApproved=false){
+  const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result||s.phase!=='self'||incap())return;
   const w=W[a.k],item=itemForKey(a.k);
   if(w.mode==='unarmed'||weaponOkay(w,a.k))return;
   if(avail(a.k)<1)return alert('Du har ikke flere '+w.n+' i beholdningen. Ret antal under Inventory, hvis våbnet er samlet op.');
   const next=neededHands(w);
-  if(s.interaction&&s.action!=='Use an Object')return alert('Du har allerede brugt din frie object interaction denne tur. Du kan ikke automatisk trække et nyt våben og angribe med det på samme tur efter 2014-reglerne. Vent til næste tur, brug en lovlig særregel, eller aftal situationen med DM.');
-  if(!confirm('Træk '+w.n+'? Dette bruger normalt én fri object interaction. Bekræft også, at tidligere våben er lagt væk eller sluppet lovligt.'))return;
-  commit(()=>{s.hands=next;s.heldWeapon=item;s.interaction=true;msg(w.n+' er nu klar i hånden.');});
+  const usedInteraction=s.interaction&&s.action!=='Use an Object';
+  if(usedInteraction){
+    if(!dmApproved)return alert('Fri object interaction er brugt. Vælg DM GODKENDT — TRÆK VÅBEN på angrebskortet, hvis DM tillader dette ekstra våbenskift.');
+    if(!confirm('Har DM godkendt at Vargo trækker '+w.n+' selvom hans frie object interaction allerede er brugt?'))return;
+  }else if(!confirm('Træk '+w.n+'? Dette bruger normalt din frie object interaction. Bekræft også, at tidligere våben er lagt væk eller sluppet lovligt.'))return;
+  commit(()=>{s.hands=next;s.heldWeapon=item;s.interaction=true;
+    msg(w.n+' er nu klar i hånden.'+(usedInteraction?' DM-godkendt ekstra våbenskift; fri object interaction er fortsat brugt.':''));
+  });
 }
 function changeAttack(i,k,v){
   const a=i===2?s.bonusAttack:s.attacks[i];if(!a||a.result)return;
