@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111315">
-<title>Vargo Combat Assistant V20.8 — Våbenskift efter kast</title>
+<title>Vargo Combat Assistant V20.11 — GWM Bonus</title>
 <style>
 
 :root{--bg:#111315;--panel:#1a1e21;--panel2:#23292e;--line:#394147;--text:#f4f1e8;--muted:#aeb6bb;--accent:#d76543;--good:#4b9b68;--warn:#d5a33c;--bad:#bd4b4b;--blue:#4f7fa7}
@@ -144,7 +144,7 @@ button.chip{font-size:.77rem;padding:5px 7px;margin:4px 3px 5px 0}
 <section class="card" id="extras"><div class="stephead"><h2>BONUS ATTACKS & REACTION</h2></div>
   <div class="row" id="bonusButtons"></div><div id="bonusUsed" class="small"></div>
   <hr><div class="row" id="reactionButtons"></div>
-  <details><summary>Hvornår kan jeg bruge dem?</summary><div class="explain">GWM-bonus: melee crit/kill med ledig bonus action. Two-Weapon Fighting: to forskellige light melee-våben, bonus action ledig. Spirit Shield (2d6) bruger samme reaction som Opportunity Attack og beskytter kun andre creatures inden for 30 ft., som Vargo kan se.</div></details>
+  <details><summary>Hvornår kan jeg bruge dem?</summary><div class="explain">GWM-bonus (2014): CRIT eller et mål på 0 HP med et melee-våben på egen tur, samt ledig bonus action. GWM −5/+10 er uafhængigt. Two-Weapon Fighting: to forskellige light melee-våben, bonus action ledig. Spirit Shield (2d6) bruger samme reaction som Opportunity Attack og beskytter kun andre creatures inden for 30 ft., som Vargo kan se.</div></details>
 </section>
 <section class="card"><div class="stephead"><h2>ANCESTRAL GUARDIAN & CHAINS</h2></div><div id="apStatus" class="effect good"></div><div id="chainStatus" class="effect"></div><div id="chainAttuneControl" class="row toolset"></div>
   <details><summary>Regler for Chains og Ancestral Protectors</summary><div class="explain">Chains kræver attunement by a Barbarian. Under Rage tæller melee weapon attacks som magical mod resistance/immunity. Én gang pr. combat: Når du rammer en creature påvirket af Ancestral Protectors, får målet −10 ft. Speed og kan ikke tage reactions indtil starten af din næste tur. Første AP-hit kan også aktivere Chains. Ranged hits kan ramme et AP-mål; passiv magical gælder ikke thrown attacks.</div></details>
@@ -318,6 +318,34 @@ function renderTargets(){el('targets').innerHTML=s.targets.map(t=>`<div class="m
   el('conditionsOut').innerHTML=sourceList('self',s.conditions)+s.targets.map(t=>sourceList(t.id,t.conditions)).join('');
 }
 function sourceList(id,arr){return `<div class="small"><b>${id==='self'?'Vargo':safe(target(id)?.name||id)}</b>: ${arr.length?arr.map(e=>`<button class="chip" onclick="removeCondition('${id}',${e.id})">${safe(e.name)} (${safe(e.source)}) ×</button>`).join(' '):'Ingen conditions'}</div>`;}
+// GWM 2014 has two independent features: -5/+10 only for heavy melee attacks,
+// and a bonus-action melee WEAPON attack after a crit or reducing a target to 0 HP
+// with a melee-category weapon. A thrown handaxe/javelin/dagger remains a melee
+// weapon, even though the thrown attack itself is a ranged weapon attack.
+function gwmTriggerAttack(a){
+  if(!a||!['hit','crit'].includes(a.result))return false;
+  const w=W[a.k];
+  if(!w||(w.mode!=='melee'&&w.mode!=='thrown'))return false;
+  return a.result==='crit'||a.kill===true;
+}
+function gwmTriggered(){return s.attacks.some(gwmTriggerAttack);}
+function gwmBonusReady(){return s.combat&&s.phase==='self'&&s.action==='Attack'&&!s.bonus&&!incap()&&gwmTriggered();}
+function gwmBonusReason(){
+  if(!gwmTriggered())return 'Kræver CRIT eller at et melee-våben reducerer et mål til 0 HP.';
+  if(s.phase!=='self')return 'Kun på Vargos egen tur.';
+  if(incap())return 'Vargo kan ikke handle.';
+  if(s.bonus)return 'Bonus action er allerede brugt på '+s.bonus+'.';
+  if(s.action!=='Attack')return 'Ingen Attack action aktiv.';
+  return 'CRIT / 0 HP: bonus action ledig.';
+}
+function setTargetZero(i,value){
+  const a=i===2?s.bonusAttack:s.attacks[i];
+  if(!a||!['hit','crit'].includes(a.result))return;
+  if(i===2&&s.bonusAttackType==='GWM'){
+    // Marking 0 HP is still useful, but it does not give a second bonus action.
+  }
+  commit(()=>{a.kill=!!value;msg(`${target(a.id)?.name||'Målet'} ${a.kill?'reduceret til 0 HP':'ikke markeret på 0 HP'}. GWM-bonus: ${gwmBonusReason()}`);});
+}
 function renderCombat(){
   el('rageBtn').textContent=s.rage?'RAGE ON':'START RAGE (BONUS)';el('rageBtn').className=s.rage?'active':'';
   el('rageBtn').disabled=s.phase!=='self'||incap()||(!s.rage&&!!s.bonus)||(!s.rage&&s.rages<1);
@@ -331,10 +359,9 @@ function renderCombat(){
   el('initiative').value=s.initiativeRoll===null?'':s.initiativeRoll;el('initiativeBonus').textContent=signed(statMod('DEX'));
   el('actionSelect').value=s.action && s.action!=='Attack' ? s.action : '';
   const expanded=[0,1,2].map(i=>el('attackAdvanced'+i)?.open||false);el('attackCards').innerHTML=s.attacks.map((a,i)=>card(a,i)).join('')+(s.bonusAttack?card(s.bonusAttack,2):'');expanded.forEach((opened,i)=>{const panel=el('attackAdvanced'+i);if(panel&&opened)panel.open=true;});
-  const meleeCrit=s.attacks.some(a=>(a.result==='crit'||(a.kill&&a.result==='hit'))&&W[a.k].mode==='melee');
   const light=s.attacks.some(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');
   const canBonus=!s.bonus&&s.phase==='self'&&s.action==='Attack'&&!incap();
-  el('bonusButtons').innerHTML=`<button ${canBonus&&meleeCrit?'':'disabled'} onclick="beginBonus('GWM')">GWM BONUS</button><button ${canBonus&&light&&s.hands==='dual'?'':'disabled'} onclick="beginBonus('TWF')">TWO-WEAPON</button><div class="small">GWM kræver melee crit/kill. TWF kræver to forskellige light melee-våben i hænderne. Rage bruger samme bonus action.</div>`;
+  el('bonusButtons').innerHTML=`<button class="${gwmBonusReady()?'good':''}" ${gwmBonusReady()?'':'disabled'} onclick="beginBonus('GWM')">GWM BONUS — ${gwmBonusReady()?'KLAR':'LÅST'}</button><button ${canBonus&&light&&s.hands==='dual'?'':'disabled'} onclick="beginBonus('TWF')">TWO-WEAPON</button><div class="small">GWM: ${safe(gwmBonusReason())} TWF: to light melee-våben og ledig bonus action. −5/+10 er et separat valg.</div>`;
   el('reactionButtons').innerHTML=`<button ${s.rage&&!s.reaction&&s.combat&&!incap()?'':'disabled'} onclick="spiritShield()">SPIRIT SHIELD 2d6</button><button ${!s.reaction&&s.phase==='others'&&!incap()?'':'disabled'} onclick="opportunity()">OPPORTUNITY ATTACK</button><div class="small">Spirit Shield: en anden creature, synlig inden for 30 ft. Opportunity Attack: når en synlig fjende forlader din reach; normalt 5 ft. på dens tur.</div>`;
   el('apStatus').innerHTML=s.ap?`AP: <b>${safe(target(s.ap)?.name||'Ukendt')}</b> • disadvantage på angreb mod andre end Vargo; andre får resistance mod skaden fra målets angreb. Gælder indtil starten af Vargos næste tur, mens Rage varer.`:'AP: Intet mål markeret denne tur.';
   el('chainStatus').innerHTML=`<b>Chains:</b> ${s.chains}/1 pr. combat • ${s.attuned?'Attuned':'KRÆVER ATTUNEMENT'} • Passive magical kun under Rage på melee weapon attacks. ${s.chainsDebuff?`Aktiv debuff på <b>${safe(target(s.chainsDebuff)?.name||'ukendt')}</b>: −10 ft., ingen reactions indtil starten af Vargos næste tur.`:''}`;
@@ -343,7 +370,8 @@ function renderCombat(){
 }
 function card(a,i){
  const w=W[a.k],m=mods(a),b=hitBonus(a);
- const legal=weaponOkay(w,a.k)&&avail(a.k)>0&&distOk(a)&&a.cover!==3&&!incap()&&(s.phase==='self')&&(i===2||(!s.action||s.action==='Attack'));
+ const bonusWeaponOK=i!==2||s.bonusAttackType!=='GWM'||w.mode==='melee';
+ const legal=bonusWeaponOK&&weaponOkay(w,a.k)&&avail(a.k)>0&&distOk(a)&&a.cover!==3&&!incap()&&(s.phase==='self')&&(i===2||(!s.action||s.action==='Attack'));
  const locked=!!a.result,opts=Object.entries(W).map(([k,v])=>[k,`${v.n} (${v.mode})`]);
  const hitType=m.kind==='advantage'?'2d20 high':m.kind==='disadvantage'?'2d20 low':'1d20';
  const ap=s.ap===a.id&&s.rage,canChains=(a.result==='hit'||a.result==='crit')&&ap;
@@ -353,16 +381,19 @@ function card(a,i){
  <label>Mål<select ${locked?'disabled':''} onchange="changeAttack(${i},'id',this.value)">${optionList(s.targets.map(t=>[t.id,t.name]),a.id)}</select></label></div>
  ${w.heavy&&w.mode==='melee'?`<div class="row toolset"><button type="button" class="gwm-toggle ${a.gwm?'active':''}" aria-pressed="${a.gwm?'true':'false'}" ${locked?'disabled':''} onclick="changeAttack(${i},'gwm',${a.gwm?'false':'true'})">GWM −5/+10 · ${a.gwm?'ON':'OFF'}</button></div>`:''}
  <div class="rollbox"><div class="rolltitle">TO HIT • ${m.kind.toUpperCase()}</div><div class="roll">${hitType} ${b>=0?'+':''}${b}${s.bless?' +1d4 Bless':''}</div><div class="small">${safe([...m.adv.map(x=>'ADV: '+x),...m.dis.map(x=>'DIS: '+x)].join(' • ')||'Standard attack roll')}</div></div>
- <div class="rollbox"><div class="rolltitle">DAMAGE (NORMAL / CRIT)</div><div class="roll">${dice(a)}<div class="small">CRIT: ${dice(a,true)}</div></div><div class="compact-note">${magical(a)?'Magical via Chains (Rage + attunement)':'Ikke magical fra Chains'}${w.mode==='thrown'?' • Kast: ingen melee-bonus':''}</div></div>
+ <div class="rollbox"><div class="rolltitle">${a.result==='crit'?'CRIT DAMAGE':a.result==='hit'?'DAMAGE • HIT':'DAMAGE (NORMAL / CRIT)'}</div><div class="roll">${dice(a,a.result==='crit')}<div class="small">${a.result==='crit'?'NORMAL':'CRIT'}: ${dice(a,a.result!=='crit')}</div></div><div class="compact-note">${magical(a)?'Magical via Chains (Rage + attunement)':'Ikke magical fra Chains'}${w.mode==='thrown'?' • Kast: ingen melee-bonus':''}</div></div>
  ${!locked&&!weaponOkay(w,a.k)?`<div class="warnnote">${safe(W[a.k].n)} er ikke i hånden.
  ${s.interaction&&s.action!=='Use an Object'
    ?`<button type="button" class="warn" onclick="readyForAttack(${i},true)">DM GODKENDT — TRÆK VÅBEN</button><div class="small">Den frie object interaction er brugt. Brug kun knappen, hvis DM godkender dette ekstra våbenskift.</div>`
    :`<button type="button" onclick="readyForAttack(${i})">TRÆK / GØR VÅBEN KLAR</button>`}</div>`:''}${avail(a.k)===0?'<div class="warnnote">Våbnet er ikke længere i din beholdning.</div>':''}
  ${locked&&w.mode==='thrown'?`<div class="compact-note">${safe(w.n)} er kastet og trukket fra beholdningen. Vargo har nu ${safe(heldName())} i hånden. Vælg et nyt våben på næste angreb; et ekstra træk kræver DM-godkendelse, hvis den frie interaction allerede er brugt.</div>`:''}
  ${m.notes.length?`<div class="warnnote">${safe(m.notes.join(' • '))}</div>`:''}
+ ${!bonusWeaponOK?'<div class="warnnote">GWM-bonusangrebet skal være et melee weapon attack. Vælg melee-varianten af våbnet.</div>':''}
  ${locked?`<div class="row toolset"><button class="ghost" onclick="correctAttack(${i})">RET / FORTRYD ANGREB</button>${a.surprise?'<span class="tag">Surprise +2d6</span>':''}${ap?'<span class="tag">Ancestral Protectors</span>':''}</div>
+ ${['hit','crit'].includes(a.result)?`<div class="row toolset"><button type="button" class="${a.kill?'warn':'ghost'}" onclick="setTargetZero(${i},${!a.kill})">MÅL PÅ 0 HP · ${a.kill?'JA':'NEJ'}</button></div>`:''}
+ ${i<2&&gwmTriggerAttack(a)?`<div class="effect ${gwmBonusReady()?'good':'warn'}"><b>GWM BONUS ${gwmBonusReady()?'KLAR':'UDLØST — BLOKERET'}</b><div class="small">${safe(gwmBonusReason())}</div>${gwmBonusReady()?`<button type="button" class="good" onclick="beginBonus('GWM')">BRUG GWM BONUSANGREB</button>`:''}</div>`:''}
  ${canChains?`<div class="row toolset"><button class="warn" ${!s.attuned||!s.rage||!s.chains?'disabled':''} onclick="activateChains(${i})">${!s.attuned?`CHAINS ${s.chains}/1 — ATTUNEMENT MANGLER`:s.chains?`CHAINS 1/1 — BRUG PÅ HIT`:`CHAINS 0/1 — BRUGT DENNE KAMP`}</button></div>${!s.attuned?'<div class="compact-note">1/1 = charge er klar. Gå til ANCESTRAL GUARDIAN & CHAINS og markér, hvis du allerede er attuned.</div>':''}`:''}`:
- `<div class="segment"><button ${legal?'':'disabled'} onclick="recordAttack(${i},'miss')">MISS</button><button class="good" ${legal?'':'disabled'} onclick="recordAttack(${i},'hit')">HIT</button><button class="warn" ${legal?'':'disabled'} onclick="recordAttack(${i},'crit')">CRIT</button><label class="inline" style="justify-content:center;margin:0"><input type="checkbox" ${a.kill?'checked':''} onchange="changeAttack(${i},'kill',this.checked)"> KILL</label></div>`}
+ `<div class="segment"><button ${legal?'':'disabled'} onclick="recordAttack(${i},'miss')">MISS</button><button class="good" ${legal?'':'disabled'} onclick="recordAttack(${i},'hit')">HIT</button><button class="warn" ${legal?'':'disabled'} onclick="recordAttack(${i},'crit')">CRIT</button></div>`}
  <div class="compact-note">${w.mode==='thrown'?`Range ${w.range.join('/')} ft.`:`Reach ${s.phase==='self'?10:5} ft. på ${s.phase==='self'?'egen':'andres'} tur`}</div>
  <details id="attackAdvanced${i}"><summary>Flere muligheder: afstand, cover, ekstra skade, grapple / shove</summary>
  <div class="grid"><label>Afstand (ft.)<input ${locked?'disabled':''} type="number" min="0" value="${a.dist}" onchange="changeAttack(${i},'dist',this.value)"></label>
@@ -432,8 +463,9 @@ function recordAttack(i,result){const a=i===2?s.bonusAttack:s.attacks[i];if(!a||
   if(i<2&&s.action&&s.action!=='Attack')return;
   if(i===1&&!s.attacks[0].result)return alert('Registrér første angreb først.');
   if(i===2&&s.bonus!== (s.bonusAttackType==='TWF'?'TWF':'GWM'))return;
+  if(i===2&&s.bonusAttackType==='GWM'&&w.mode!=='melee')return alert('GWM-bonusangrebet skal være et melee weapon attack.');
   if(i===2&&s.bonusAttackType==='TWF'&&(!w.light||w.mode!=='melee'||!s.attacks.some(x=>x.result&&W[x.k].light&&W[x.k].mode==='melee'&&(x.k.startsWith('h')!==a.k.startsWith('h')))))return alert('TWF kræver det andet light melee-våben i din anden hånd.');
-  commit(()=>{if(i<2)s.action='Attack';a.result=result;s.attacked=true;
+  commit(()=>{if(i<2)s.action='Attack';a.result=result;if(result==='miss')a.kill=false;s.attacked=true;
     if(w.mode==='thrown'){
       const key=itemForKey(a.k);
       a.preThrowHands=s.hands;a.preThrowWeapon=s.heldWeapon;
@@ -464,8 +496,12 @@ function correctAttack(i){const a=i===2?s.bonusAttack:s.attacks[i];if(!a?.result
   s.attacked=[...s.attacks,s.bonusAttack].filter(Boolean).some(x=>x.result);
   if(i===2){s.bonus='';s.bonusAttack=null;s.bonusAttackType='';}
   msg('Angreb fortrudt. Kontrollér AP og Chains. Chains-forbrug bevares til næste combat; brug UNDO til at fortryde aktiveringen.');});}
-function beginBonus(type){if(s.bonus||s.phase!=='self'||s.action!=='Attack'||incap())return;
-  commit(()=>{s.bonus=type;s.bonusAttackType=type;if(type==='TWF'){const used=s.attacks.find(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');s.bonusAttack=aNew(used?.k.startsWith('h')?'ds':'hm');s.bonusAttack.offhand=true;}else{s.bonusAttack=aNew();}msg(type+' bonus action brugt — bonusangreb klar.');});}
+function beginBonus(type){
+  if(s.bonus||s.phase!=='self'||s.action!=='Attack'||incap())return;
+  if(type==='GWM'&&!gwmBonusReady())return alert('GWM-bonus er ikke tilgængeligt: '+gwmBonusReason());
+  if(type==='TWF'&&!(s.hands==='dual'&&s.attacks.some(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee')))return alert('To-Weapon Fighting er ikke tilgængeligt.');
+  commit(()=>{s.bonus=type;s.bonusAttackType=type;if(type==='TWF'){const used=s.attacks.find(a=>a.result&&W[a.k].light&&W[a.k].mode==='melee');s.bonusAttack=aNew(used?.k.startsWith('h')?'ds':'hm');s.bonusAttack.offhand=true;}else{s.bonusAttack=aNew();}msg(type+' bonus action brugt — bonusangreb klar.');});
+}
 function turnAction(v){if(!v||s.phase!=='self'||incap())return;commit(()=>{if(s.action&&s.action!==v)return alert('Action allerede brugt; brug Undo hvis det var en fejl.');s.action=v;msg('Action: '+v+(v==='Disengage'?' • Ingen opportunity attacks fra din movement resten af turen.':''));});}
 function rageToggle(){if(s.phase!=='self'||incap())return;commit(()=>{if(s.rage){if(s.bonus)return alert('Du skal have en ledig bonus action for at afslutte Rage frivilligt.');s.rage=false;s.bonus='End Rage';s.ap=null;msg('Rage afsluttet.');return;}if(s.bonus||s.rages<1)return;s.rage=true;s.rageTurns=0;s.rages--;s.bonus='Rage';msg('Rage aktiv: STR melee +2 damage; resistance B/P/S (også magical).');});}
 function recklessToggle(){if(s.phase!=='self'||s.attacks.some(a=>a.result&&W[a.k].mode==='melee'&&W[a.k].stat==='STR')||incap())return;commit(()=>{s.reckless=!s.reckless;s.recklessDefense=s.reckless;});}
